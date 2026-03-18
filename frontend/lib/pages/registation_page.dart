@@ -34,7 +34,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
               ),
 
               const SizedBox(
-                height: 50,
+                height: 30,
               ),
 
               Form(
