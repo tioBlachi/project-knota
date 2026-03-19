@@ -12,6 +12,14 @@ class RegistrationPage extends StatefulWidget {
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formGlobalKey = GlobalKey<FormState>();
   bool _hidePassword = true;
+  String? _selectedAddress;
+
+  final List<String> _allSuggestions = [
+  '16318 NW 18TH ST, PEMBROKE PINES, FL 33028',
+  '16318 SW 10TH ST, PEMBROKE PINES, FL 33027',
+  '16318 OAKMONT DR, DELRAY BEACH, FL 33446',
+  '320 SE 2ND AVE, DEERFIELD BEACH, FL 33441',
+];
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +100,50 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         label: RequiredLabel(label: 'Last Name'),
                       ),
                     ),
+                    ///////////////////////// Autocomplete test area
+                    const SizedBox(height: 20),
 
+                    Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return const Iterable<String>.empty();
+                        }
+
+                        final query = textEditingValue.text.toUpperCase();
+
+                        return _allSuggestions.where((address) => address.startsWith(query));
+                      },
+                      onSelected: (String selection) {
+                        setState(() {
+                          _selectedAddress = selection;
+                        });
+                      },
+                      fieldViewBuilder: (
+                        context,
+                        textEditingController,
+                        focusNode,
+                        onFieldSubmitted,
+                      ) {
+                        return TextFormField(
+                          controller: textEditingController,
+                          focusNode: focusNode,
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.streetAddress,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Address is required';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            label: RequiredLabel(label: 'Origin Address'),
+                          ),
+                        );
+                      },
+                    ),
+                    /////////////////////////
                     const SizedBox(
                       height: 20,
                     ),
@@ -175,7 +226,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         if (!value.contains(RegExp(r'[0-9]'))) {
                           return 'Must have a number';
                         }
-                        if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+                        if (!value.contains(
+                          RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
+                        )) {
                           return 'Must have a special character';
                         }
                         return null;
@@ -185,7 +238,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         label: RequiredLabel(label: 'Password'),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _hidePassword ? Icons.visibility : Icons.visibility_off,
+                            _hidePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                           ),
                           onPressed: () {
                             setState(() {
@@ -204,10 +259,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     FilledButton(
                       onPressed: () {
                         if (_formGlobalKey.currentState!.validate()) {
-                          debugPrint('All registration values pass!\nAdd to database');
-                        }
-                        else {
-                          debugPrint('Something is wrong! Cannot add to database');
+                          debugPrint(
+                            'All registration values pass!\nAdd to database',
+                          );
+                        } else {
+                          debugPrint(
+                            'Something is wrong! Cannot add to database',
+                          );
                         }
                       },
                       child: Text('Register'),
