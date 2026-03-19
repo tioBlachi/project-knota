@@ -16,16 +16,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   centerTitle: true,
-      //   title: const Text("Login"),
-      // ),
+      appBar: AppBar(
+        // centerTitle: true,
+        // title: const Text("Login"),
+      ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              //mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.network(
                   'https://fastly.picsum.photos/id/200/367/267.jpg?hmac=GFqST8d65ZPaEGEiCClMdf7MXamTdDadgB7lNZXYWP8',
@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
         
                 const SizedBox(
-                  height: 10,
+                  height: 50,
                 ),
         
                 Form(
@@ -140,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [

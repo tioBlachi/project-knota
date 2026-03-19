@@ -2,6 +2,6 @@ fastapi[standard]
 sqlmodel
 requests
 alembic
-psycopg[binary]
 python-dotenv
 pwdlib[argon2]
+psycopg[binary]

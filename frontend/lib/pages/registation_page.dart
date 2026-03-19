@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:frontend/widgets/required_label.dart';
+import 'package:frontend/widgets/address_autocomplete.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -11,7 +12,25 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formGlobalKey = GlobalKey<FormState>();
+
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _companyNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _hidePassword = true;
+  String? _selectedAddress;
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _companyNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,206 +39,224 @@ class _RegistrationPageState extends State<RegistrationPage> {
         centerTitle: true,
         title: const Text("Registration Page"),
       ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: Column(
+              children: [
+                Text(
+                  "Register for a Knota account",
+                  style: TextStyle(fontSize: 30),
+                  textAlign: TextAlign.center,
+                ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Register for a Knota account",
-                style: TextStyle(fontSize: 30),
-                textAlign: TextAlign.center,
-              ),
+                const SizedBox(height: 30),
 
-              const SizedBox(
-                height: 30,
-              ),
+                Form(
+                  key: _formGlobalKey,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
 
-              Form(
-                key: _formGlobalKey,
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 20,
-                    ),
+                      // First Name
+                      TextFormField(
+                        controller: _firstNameController,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.name,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
 
-                    // first name input
-                    TextFormField(
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.name,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Required';
-                        }
+                          if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(value)) {
+                            return 'Only letters, spaces, (-) and (\') allowed';
+                          }
 
-                        if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(value)) {
-                          return 'Only letters, spaces, (-) and (\') allowed';
-                        }
-
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        label: RequiredLabel(label: 'First Name'),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    // last name input
-                    TextFormField(
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.name,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Required';
-                        }
-
-                        if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(value)) {
-                          return 'Only letters, spaces, (-) and (\') allowed';
-                        }
-
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        label: RequiredLabel(label: 'Last Name'),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    // company name input
-                    TextFormField(
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.text,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
                           return null;
-                        }
-                        if (!RegExp(
-                          r"^[a-zA-Z0-9\s&.,'-]+$",
-                        ).hasMatch(value)) {
-                          return 'Invalid characters in company name';
-                        }
-
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Company Name (Optional)',
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    // email input
-                    TextFormField(
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.emailAddress,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email cannot be empty';
-                        }
-
-                        if (!EmailValidator.validate(value)) {
-                          return 'Invalid email address';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        label: RequiredLabel(label: 'Email'),
-                      ),
-                    ),
-
-                    // password input
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    TextFormField(
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      textInputAction: TextInputAction.done,
-                      keyboardType: TextInputType.visiblePassword,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      obscureText: _hidePassword,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password cannot be empty';
-                        }
-                        if (value.length < 8) {
-                          return 'Minimum 8 characters required';
-                        }
-                        if (!value.contains(RegExp(r'[A-Z]'))) {
-                          return 'Must have an uppercase letter';
-                        }
-                        if (!value.contains(RegExp(r'[a-z]'))) {
-                          return 'Must have a lowercase letter';
-                        }
-                        if (!value.contains(RegExp(r'[0-9]'))) {
-                          return 'Must have a number';
-                        }
-                        if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-                          return 'Must have a special character';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        label: RequiredLabel(label: 'Password'),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _hidePassword ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _hidePassword = !_hidePassword;
-                            });
-                          },
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          label: RequiredLabel(label: 'First Name'),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(
-                      height: 50,
-                    ),
+                      const SizedBox(height: 20),
 
-                    // login button
-                    FilledButton(
-                      onPressed: () {
-                        if (_formGlobalKey.currentState!.validate()) {
-                          debugPrint('All registration values pass!\nAdd to database');
-                        }
-                        else {
-                          debugPrint('Something is wrong! Cannot add to database');
-                        }
-                      },
-                      child: Text('Register'),
-                    ),
+                      // Last Name
+                      TextFormField(
+                        controller: _lastNameController,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.name,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
 
-                    const SizedBox(
-                      height: 20,
-                    ),
-                  ],
+                          if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(value)) {
+                            return 'Only letters, spaces, (-) and (\') allowed';
+                          }
+
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          label: RequiredLabel(label: 'Last Name'),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Address - should autocomplere
+                      AddressAutocomplete(
+                        onSelected: (address) {
+                          _selectedAddress = address.isEmpty ? null : address;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Optional Company Name
+                      // If null, first and last name will be used in the generated mileage report
+                      TextFormField(
+                        controller: _companyNameController,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.text,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return null;
+                          }
+                          if (!RegExp(r"^[a-zA-Z0-9\s&.,'-]+$").hasMatch(value)) {
+                            return 'Invalid characters in company name';
+                          }
+
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Company Name (Optional)',
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Email
+                      TextFormField(
+                        controller: _emailController,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.emailAddress,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email cannot be empty';
+                          }
+
+                          if (!EmailValidator.validate(value)) {
+                            return 'Invalid email address';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          label: RequiredLabel(label: 'Email'),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Password. Will be hashed at the backend
+                      TextFormField(
+                        controller: _passwordController,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        textInputAction: TextInputAction.done,
+                        keyboardType: TextInputType.visiblePassword,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        obscureText: _hidePassword,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password cannot be empty';
+                          }
+                          if (value.length < 8) {
+                            return 'Minimum 8 characters required';
+                          }
+                          if (!value.contains(RegExp(r'[A-Z]'))) {
+                            return 'Must have an uppercase letter';
+                          }
+                          if (!value.contains(RegExp(r'[a-z]'))) {
+                            return 'Must have a lowercase letter';
+                          }
+                          if (!value.contains(RegExp(r'[0-9]'))) {
+                            return 'Must have a number';
+                          }
+                          if (!value.contains(
+                            RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
+                          )) {
+                            return 'Must have a special character';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          label: RequiredLabel(label: 'Password'),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _hidePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _hidePassword = !_hidePassword;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      FilledButton(
+                        onPressed: () {
+                          final companyName =
+                              _companyNameController.text.trim().isEmpty
+                              ? null
+                              : _companyNameController.text.trim();
+
+                          if (_formGlobalKey.currentState!.validate()) {
+                            debugPrint(
+                              'First name: ${_firstNameController.text.trim()}',
+                            );
+                            debugPrint(
+                              'Last name: ${_lastNameController.text.trim()}',
+                            );
+                            debugPrint('Company name: $companyName');
+                            debugPrint('Selected address: $_selectedAddress');
+                            debugPrint('Email: ${_emailController.text.trim()}');
+                            debugPrint('Password: ${_passwordController.text}');
+                            debugPrint(
+                              'All registration values pass!\nAdd to database',
+                            );
+                          } else {
+                            debugPrint(
+                              'Something is wrong! Cannot add to database',
+                            );
+                          }
+                        },
+                        child: Text('Register'),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
