@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:frontend/widgets/required_label.dart';
+import 'package:frontend/widgets/address_autocomplete.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -11,15 +12,25 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formGlobalKey = GlobalKey<FormState>();
+
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _companyNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _hidePassword = true;
   String? _selectedAddress;
 
-  final List<String> _allSuggestions = [
-  '16318 NW 18TH ST, PEMBROKE PINES, FL 33028',
-  '16318 SW 10TH ST, PEMBROKE PINES, FL 33027',
-  '16318 OAKMONT DR, DELRAY BEACH, FL 33446',
-  '320 SE 2ND AVE, DEERFIELD BEACH, FL 33441',
-];
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _companyNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,34 +39,29 @@ class _RegistrationPageState extends State<RegistrationPage> {
         centerTitle: true,
         title: const Text("Registration Page"),
       ),
-
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Center(
             child: Column(
-              //mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   "Register for a Knota account",
                   style: TextStyle(fontSize: 30),
                   textAlign: TextAlign.center,
                 ),
-        
-                const SizedBox(
-                  height: 30,
-                ),
-        
+
+                const SizedBox(height: 30),
+
                 Form(
                   key: _formGlobalKey,
                   child: Column(
                     children: [
-                      const SizedBox(
-                        height: 20,
-                      ),
-        
-                      // first name input
+                      const SizedBox(height: 20),
+
+                      // First Name
                       TextFormField(
+                        controller: _firstNameController,
                         textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.name,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -63,11 +69,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           if (value == null || value.isEmpty) {
                             return 'Required';
                           }
-        
+
                           if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(value)) {
                             return 'Only letters, spaces, (-) and (\') allowed';
                           }
-        
+
                           return null;
                         },
                         decoration: InputDecoration(
@@ -75,13 +81,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           label: RequiredLabel(label: 'First Name'),
                         ),
                       ),
-        
-                      const SizedBox(
-                        height: 20,
-                      ),
-        
-                      // last name input
+
+                      const SizedBox(height: 20),
+
+                      // Last Name
                       TextFormField(
+                        controller: _lastNameController,
                         textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.name,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -89,11 +94,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           if (value == null || value.isEmpty) {
                             return 'Required';
                           }
-        
+
                           if (!RegExp(r"^[a-zA-Z\s'-]+$").hasMatch(value)) {
                             return 'Only letters, spaces, (-) and (\') allowed';
                           }
-        
+
                           return null;
                         },
                         decoration: InputDecoration(
@@ -101,56 +106,22 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           label: RequiredLabel(label: 'Last Name'),
                         ),
                       ),
-                      ///////////////////////// Autocomplete test area
+
                       const SizedBox(height: 20),
-        
-                      Autocomplete<String>(
-                        optionsBuilder: (TextEditingValue textEditingValue) {
-                          if (textEditingValue.text.isEmpty) {
-                            return const Iterable<String>.empty();
-                          }
-        
-                          final query = textEditingValue.text.toUpperCase();
-        
-                          return _allSuggestions.where((address) => address.startsWith(query));
-                        },
-                        onSelected: (String selection) {
-                          setState(() {
-                            _selectedAddress = selection;
-                          });
-                        },
-                        fieldViewBuilder: (
-                          context,
-                          textEditingController,
-                          focusNode,
-                          onFieldSubmitted,
-                        ) {
-                          return TextFormField(
-                            controller: textEditingController,
-                            focusNode: focusNode,
-                            textInputAction: TextInputAction.next,
-                            keyboardType: TextInputType.streetAddress,
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Address is required';
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(),
-                              label: RequiredLabel(label: 'Origin Address'),
-                            ),
-                          );
+
+                      // Address - should autocomplere
+                      AddressAutocomplete(
+                        onSelected: (address) {
+                          _selectedAddress = address.isEmpty ? null : address;
                         },
                       ),
-                      /////////////////////////
-                      const SizedBox(
-                        height: 20,
-                      ),
-        
-                      // company name input
+
+                      const SizedBox(height: 20),
+
+                      // Optional Company Name
+                      // If null, first and last name will be used in the generated mileage report
                       TextFormField(
+                        controller: _companyNameController,
                         textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.text,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -158,12 +129,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           if (value == null || value.isEmpty) {
                             return null;
                           }
-                          if (!RegExp(
-                            r"^[a-zA-Z0-9\s&.,'-]+$",
-                          ).hasMatch(value)) {
+                          if (!RegExp(r"^[a-zA-Z0-9\s&.,'-]+$").hasMatch(value)) {
                             return 'Invalid characters in company name';
                           }
-        
+
                           return null;
                         },
                         decoration: InputDecoration(
@@ -171,13 +140,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           labelText: 'Company Name (Optional)',
                         ),
                       ),
-        
-                      const SizedBox(
-                        height: 20,
-                      ),
-        
-                      // email input
+
+                      const SizedBox(height: 20),
+
+                      // Email
                       TextFormField(
+                        controller: _emailController,
                         autocorrect: false,
                         enableSuggestions: false,
                         textInputAction: TextInputAction.next,
@@ -187,7 +155,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           if (value == null || value.isEmpty) {
                             return 'Email cannot be empty';
                           }
-        
+
                           if (!EmailValidator.validate(value)) {
                             return 'Invalid email address';
                           }
@@ -198,13 +166,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           label: RequiredLabel(label: 'Email'),
                         ),
                       ),
-        
-                      // password input
-                      const SizedBox(
-                        height: 20,
-                      ),
-        
+
+                      const SizedBox(height: 20),
+
+                      // Password. Will be hashed at the backend
                       TextFormField(
+                        controller: _passwordController,
                         autocorrect: false,
                         enableSuggestions: false,
                         textInputAction: TextInputAction.done,
@@ -251,15 +218,27 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           ),
                         ),
                       ),
-        
-                      const SizedBox(
-                        height: 50,
-                      ),
-        
-                      // login button
+
+                      const SizedBox(height: 50),
+
                       FilledButton(
                         onPressed: () {
+                          final companyName =
+                              _companyNameController.text.trim().isEmpty
+                              ? null
+                              : _companyNameController.text.trim();
+
                           if (_formGlobalKey.currentState!.validate()) {
+                            debugPrint(
+                              'First name: ${_firstNameController.text.trim()}',
+                            );
+                            debugPrint(
+                              'Last name: ${_lastNameController.text.trim()}',
+                            );
+                            debugPrint('Company name: $companyName');
+                            debugPrint('Selected address: $_selectedAddress');
+                            debugPrint('Email: ${_emailController.text.trim()}');
+                            debugPrint('Password: ${_passwordController.text}');
                             debugPrint(
                               'All registration values pass!\nAdd to database',
                             );
@@ -271,10 +250,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         },
                         child: Text('Register'),
                       ),
-        
-                      const SizedBox(
-                        height: 20,
-                      ),
+
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),

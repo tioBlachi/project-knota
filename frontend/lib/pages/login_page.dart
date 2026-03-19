@@ -140,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
