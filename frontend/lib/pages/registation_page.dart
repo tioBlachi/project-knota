@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:frontend/widgets/required_label.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
+import 'package:frontend/models/user_models.dart';
+import 'package:frontend/services/user_services.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -129,7 +131,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           if (value == null || value.isEmpty) {
                             return null;
                           }
-                          if (!RegExp(r"^[a-zA-Z0-9\s&.,'-]+$").hasMatch(value)) {
+                          if (!RegExp(
+                            r"^[a-zA-Z0-9\s&.,'-]+$",
+                          ).hasMatch(value)) {
                             return 'Invalid characters in company name';
                           }
 
@@ -223,25 +227,31 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                       FilledButton(
                         onPressed: () {
-                          final companyName =
+                          final String? companyName =
                               _companyNameController.text.trim().isEmpty
                               ? null
-                              : _companyNameController.text.trim();
+                              : _companyNameController.text.trim().toUpperCase();
 
                           if (_formGlobalKey.currentState!.validate()) {
-                            debugPrint(
-                              'First name: ${_firstNameController.text.trim()}',
+                            final String user_first_name = _firstNameController
+                                .text
+                                .trim();
+                            final String user_last_name = _lastNameController
+                                .text
+                                .trim();
+                            final String user_email = _emailController.text
+                                .trim();
+                            final String user_password =
+                                _passwordController.text;
+                            UserCreate user = UserCreate(
+                              firstName: user_first_name.toUpperCase(),
+                              lastName: user_last_name.toUpperCase(),
+                              companyName: companyName,
+                              address: _selectedAddress!.toString(),
+                              email: user_email.toUpperCase(),
+                              password: user_password,
                             );
-                            debugPrint(
-                              'Last name: ${_lastNameController.text.trim()}',
-                            );
-                            debugPrint('Company name: $companyName');
-                            debugPrint('Selected address: $_selectedAddress');
-                            debugPrint('Email: ${_emailController.text.trim()}');
-                            debugPrint('Password: ${_passwordController.text}');
-                            debugPrint(
-                              'All registration values pass!\nAdd to database',
-                            );
+                            UserServices.createUser(user);
                           } else {
                             debugPrint(
                               'Something is wrong! Cannot add to database',
