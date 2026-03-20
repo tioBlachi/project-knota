@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:frontend/pages/login_page.dart';
 import 'package:frontend/widgets/required_label.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
 import 'package:frontend/models/user_models.dart';
@@ -226,32 +227,104 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       const SizedBox(height: 50),
 
                       FilledButton(
-                        onPressed: () {
+                        onPressed: () async {
                           final String? companyName =
                               _companyNameController.text.trim().isEmpty
                               ? null
-                              : _companyNameController.text.trim().toUpperCase();
+                              : _companyNameController.text
+                                    .trim()
+                                    .toUpperCase();
 
                           if (_formGlobalKey.currentState!.validate()) {
-                            final String user_first_name = _firstNameController
+                            final String userFirstName = _firstNameController
                                 .text
                                 .trim();
-                            final String user_last_name = _lastNameController
-                                .text
+                            final String userLastName = _lastNameController.text
                                 .trim();
-                            final String user_email = _emailController.text
+                            final String userEmail = _emailController.text
                                 .trim();
-                            final String user_password =
+                            final String userPassword =
                                 _passwordController.text;
+
                             UserCreate user = UserCreate(
-                              firstName: user_first_name.toUpperCase(),
-                              lastName: user_last_name.toUpperCase(),
+                              firstName: userFirstName.toUpperCase(),
+                              lastName: userLastName.toUpperCase(),
                               companyName: companyName,
-                              address: _selectedAddress!.toString(),
-                              email: user_email.toUpperCase(),
-                              password: user_password,
+                              address: _selectedAddress.toString(),
+                              email: userEmail.toUpperCase(),
+                              password: userPassword,
                             );
-                            UserServices.createUser(user);
+                            try {
+                              await UserServices.createUser(user);
+
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+
+                              final snackBarController =
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: Colors.green.shade100,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      content: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green.shade900,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'User created successfully. Please Login',
+                                              style: TextStyle(
+                                                color: Colors.green.shade900,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                              await snackBarController.closed;
+
+                              Navigator.pop(context);
+                              
+                            } catch (e) {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: Colors.red.shade100,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  content: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error,
+                                        color: Colors.red.shade900,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Failed to create user: $e',
+                                          style: TextStyle(
+                                            color: Colors.red.shade900,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
                           } else {
                             debugPrint(
                               'Something is wrong! Cannot add to database',
