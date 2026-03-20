@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models.user import User, UserCreate, UserPublic, UserUpdate
-from app.core.security import hash_password
+from app.models.user import User, UserCreate, UserPublic, UserUpdate, UserLogin
+from app.core.security import hash_password, verify_password
 
 user_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -54,7 +54,7 @@ def update_user(
     user_data_dump = user_data.model_dump(exclude_unset=True)
 
     if 'password' in user_data_dump:
-        user.hashed_password = hash(user_data_dump.pop('password'))
+        user.hashed_password = hash_password(user_data_dump.pop('password'))
 
     for key, value in user_data_dump.items():
         setattr(user, key, value)
@@ -64,3 +64,30 @@ def update_user(
     session.refresh(user)
 
     return user
+
+@user_router.post('/login')
+def login_user(user_data: UserLogin, session: Session = Depends(get_session)):
+    user = session.exec(
+        select(User).where(User.email == user_data.email)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=401, detail='Invalid credentials')
+    
+    if not verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail='Invalid credentials')
+    
+    return {'message': 'Login successful', 'user_id': user.id}
+
+
+@user_router.delete('/{user_id}')
+def delete_user(user_id: int, session: Session = Depends(get_session)):
+    user = session.get(User, user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail='User does not exist')
+
+    session.delete(user)
+    session.commit()
+
+    return {'message': 'User deleted', 'user_id': user_id}
