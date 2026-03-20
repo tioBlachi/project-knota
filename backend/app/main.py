@@ -1,30 +1,20 @@
-from typing import Annotated
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends, Query, HTTPException
-from sqlmodel import Session, select
+from fastapi import FastAPI
 
-from app.db import get_session
-from app.models.address import Address
+from app.db import create_db_and_tables
+from app.routes.addr_router import addr_router
+from app.routes.user_router import user_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+    print('The applicaiton shutdown')
+
+app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/addresses/autocomplete")
-def autocomplete_addresses(
-    q: Annotated[str, Query(min_length=1)],
-    session: Annotated[Session, Depends(get_session)],
-    limit: Annotated[int, Query(le=20)] = 10,
-):
-    query = q.strip().upper()
-
-    if not query:
-        return []
-
-    statement = (
-        select(Address.full_address)
-        .where(Address.full_address.startswith(query))
-        .limit(limit)
-    )
-
-    results = session.exec(statement).all()
-    return results
+app.include_router(addr_router)
+app.include_router(user_router)
