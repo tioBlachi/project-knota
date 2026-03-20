@@ -1,14 +1,19 @@
+"""File containing data and table models related to User
+"""
 from datetime import date
 from sqlmodel import SQLModel, Field
-from ..core.security import hash_password
 
 
 class UserBase(SQLModel):
+    """
+    Base class for the User. Will be inherited from to set up the proper
+    Request and Response models
+    """
     first_name: str
     last_name: str
     company_name: str | None = None
     address: str
-    email: str
+    email: str = Field(index=True, unique=True)
 
 
 class User(UserBase, table=True):
@@ -24,6 +29,9 @@ class UserCreate(UserBase):
 
 
 class UserPublic(UserBase):
+    """
+    The publicly returned response model. Will not return passwords from the backend
+    """
     id: int
     join_date: date
 

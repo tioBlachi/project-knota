@@ -1,3 +1,6 @@
+"""
+Router for HTTP requests that are relevant to user CRUD operations
+"""
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,8 +13,23 @@ from app.core.security import hash_password, verify_password
 user_router = APIRouter(prefix="/users", tags=["users"])
 
 
+@user_router.get('/{user_id}', response_model=UserPublic)
+def get_user(user_id: int, session: Session = Depends(get_session)):
+    user = session.get(User, user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail='User not found')
+    
+    return user
+
+
 @user_router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
+    """
+    Creates a user using the UserCreate class. Checks if email already exists in the database
+    If so, raises an HTTPException. If the email is unique, the password is hashed before storage
+    into the database. Returns the UserPublic that does not contain their password.
+    """
     existing_user = session.exec(
         select(User).where(User.email == user_data.email)
     ).first()
@@ -40,12 +58,18 @@ def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
 
     return new_user
 
+
 @user_router.patch('/{user_id}', response_model=UserPublic)
 def update_user(
     user_id: int,
     user_data: UserUpdate,
     session: Session = Depends(get_session),
 ):
+    """Updates only the values given in the request body, if the user exists in the database. Otherwise, a 404 User 
+    Not Found error is returned. Rehashes the new password (if given), checks if the email 
+    already exists (to prevent multiple accounts patching the same email to an account after creation). User is then
+    updated in the database
+    """
     user = session.get(User, user_id)
 
     if not user:
@@ -56,6 +80,14 @@ def update_user(
     if 'password' in user_data_dump:
         user.hashed_password = hash_password(user_data_dump.pop('password'))
 
+    if 'email' in user_data_dump:
+        existing_user = session.exec(
+            select(User).where(User.email == user_data_dump['email'], User.id)
+        ).first()
+
+        if existing_user:
+            raise HTTPException(status_code=400, detail='Email already in use')
+
     for key, value in user_data_dump.items():
         setattr(user, key, value)
 
@@ -64,6 +96,7 @@ def update_user(
     session.refresh(user)
 
     return user
+
 
 @user_router.post('/login')
 def login_user(user_data: UserLogin, session: Session = Depends(get_session)):
