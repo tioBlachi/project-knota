@@ -1,7 +1,12 @@
 """File containing data and table models related to User
 """
 from datetime import date
-from sqlmodel import SQLModel, Field
+from typing import TYPE_CHECKING
+
+from sqlmodel import SQLModel, Field, Relationship
+
+if TYPE_CHECKING:
+    from .appointment import Appointment
 
 
 class UserBase(SQLModel):
@@ -22,6 +27,7 @@ class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
     join_date: date
+    appointments: list['Appointment'] = Relationship(back_populates='user', cascade_delete=True)
 
 
 class UserCreate(UserBase):
@@ -48,4 +54,3 @@ class UserUpdate(SQLModel):
     address: str | None = None
     email: str | None = None
     password: str | None = None
-

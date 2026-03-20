@@ -82,7 +82,7 @@ def update_user(
 
     if 'email' in user_data_dump:
         existing_user = session.exec(
-            select(User).where(User.email == user_data_dump['email'], User.id)
+            select(User).where(User.email == user_data_dump['email'], User.id != user_id)
         ).first()
 
         if existing_user:

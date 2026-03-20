@@ -6,6 +6,8 @@ from sqlmodel import SQLModel, Session, create_engine
 
 from app.models.address import Address
 from app.models.user import User
+from app.models.appointment import Appointment
+from app.models.distance import Distance
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT_DIR / '.env')
