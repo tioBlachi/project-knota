@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:frontend/pages/login_page.dart';
 import 'package:frontend/widgets/required_label.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
+import 'package:frontend/models/user_models.dart';
+import 'package:frontend/services/user_services.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -129,7 +132,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           if (value == null || value.isEmpty) {
                             return null;
                           }
-                          if (!RegExp(r"^[a-zA-Z0-9\s&.,'-]+$").hasMatch(value)) {
+                          if (!RegExp(
+                            r"^[a-zA-Z0-9\s&.,'-]+$",
+                          ).hasMatch(value)) {
                             return 'Invalid characters in company name';
                           }
 
@@ -222,26 +227,104 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       const SizedBox(height: 50),
 
                       FilledButton(
-                        onPressed: () {
-                          final companyName =
+                        onPressed: () async {
+                          final String? companyName =
                               _companyNameController.text.trim().isEmpty
                               ? null
-                              : _companyNameController.text.trim();
+                              : _companyNameController.text
+                                    .trim()
+                                    .toUpperCase();
 
                           if (_formGlobalKey.currentState!.validate()) {
-                            debugPrint(
-                              'First name: ${_firstNameController.text.trim()}',
+                            final String userFirstName = _firstNameController
+                                .text
+                                .trim();
+                            final String userLastName = _lastNameController.text
+                                .trim();
+                            final String userEmail = _emailController.text
+                                .trim();
+                            final String userPassword =
+                                _passwordController.text;
+
+                            UserCreate user = UserCreate(
+                              firstName: userFirstName.toUpperCase(),
+                              lastName: userLastName.toUpperCase(),
+                              companyName: companyName,
+                              address: _selectedAddress.toString(),
+                              email: userEmail.toUpperCase(),
+                              password: userPassword,
                             );
-                            debugPrint(
-                              'Last name: ${_lastNameController.text.trim()}',
-                            );
-                            debugPrint('Company name: $companyName');
-                            debugPrint('Selected address: $_selectedAddress');
-                            debugPrint('Email: ${_emailController.text.trim()}');
-                            debugPrint('Password: ${_passwordController.text}');
-                            debugPrint(
-                              'All registration values pass!\nAdd to database',
-                            );
+                            try {
+                              await UserServices.createUser(user);
+
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+
+                              final snackBarController =
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: Colors.green.shade100,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      content: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green.shade900,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'User created successfully. Please Login',
+                                              style: TextStyle(
+                                                color: Colors.green.shade900,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                              await snackBarController.closed;
+
+                              Navigator.pop(context);
+                              
+                            } catch (e) {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: Colors.red.shade100,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  content: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error,
+                                        color: Colors.red.shade900,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Failed to create user: $e',
+                                          style: TextStyle(
+                                            color: Colors.red.shade900,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
                           } else {
                             debugPrint(
                               'Something is wrong! Cannot add to database',
