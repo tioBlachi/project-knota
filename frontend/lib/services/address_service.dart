@@ -13,9 +13,7 @@ class AddressService {
     final uri = Uri.parse(
       '${ApiConfig.baseUrl}/addresses/autocomplete?q=$normalizedQuery',
     );
-    
-    print('Address request: $uri');
-    
+        
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {

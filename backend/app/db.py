@@ -1,16 +1,10 @@
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-
 from sqlmodel import SQLModel, Session, create_engine
+from app.config import settings
 
-from app.models.address import Address
-from app.models.user import User
+import app.models
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-load_dotenv(ROOT_DIR / '.env')
 
-DATABASE_URL: str = os.getenv("DATABASE_URL")
+DATABASE_URL: str = settings.DATABASE_URL
 
 if not DATABASE_URL:
     raise ValueError('DATABASE_URL in not set')
