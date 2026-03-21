@@ -28,13 +28,6 @@ def create_appointment(
     appointment_data: AppointmentCreate,
     session: Session = Depends(get_session),
 ):
-    """
-    Create a new appointment for a specific user.
-
-    The origin address comes from the user's stored address.
-    The backend checks the distance cache and either reuses
-    or creates a matching distance row.
-    """
     user = session.get(User, user_id)
 
     if not user:
@@ -42,6 +35,7 @@ def create_appointment(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
+
 
     distance = get_or_create_distance(
         session=session,
@@ -51,7 +45,7 @@ def create_appointment(
 
     new_appointment = Appointment(
         client_name=appointment_data.client_name,
-        destination_address=appointment_data.destination_address,
+        destination_address=appointment_data.destination_address.lower(),
         appointment_date=appointment_data.appointment_date,
         roundtrip_distance=distance.roundtrip_distance,
         user_id=user.id,
@@ -65,42 +59,33 @@ def create_appointment(
     return new_appointment
 
 
-@appointment_router.get(
-    "/appointments/{appointment_id}",
-    response_model=AppointmentPublic,
-)
+@appointment_router.get("/appointments/{appointment_id}", response_model=AppointmentPublic)
 def get_appointment(
     appointment_id: int,
     session: Session = Depends(get_session),
 ):
-    """
-    Retrieve a single appointment by ID.
-    """
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
+        logger.warning("Get appointment failed | appointment_id=%s not found", appointment_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
         )
 
+    logger.info("Retrieved appointment | appointment_id=%s", appointment_id)
     return appointment
 
 
-@appointment_router.get(
-    "/users/{user_id}/appointments",
-    response_model=list[AppointmentPublic],
-)
+@appointment_router.get("/users/{user_id}/appointments", response_model=list[AppointmentPublic])
 def get_user_appointments(
     user_id: int,
     session: Session = Depends(get_session),
 ):
-    """
-    Retrieve all appointments for a specific user.
-    """
     user = session.get(User, user_id)
 
     if not user:
+        logger.warning("Get user appointments failed | user_id=%s not found", user_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
@@ -110,27 +95,25 @@ def get_user_appointments(
         select(Appointment).where(Appointment.user_id == user_id)
     ).all()
 
+    logger.info(
+        "Retrieved user appointments | user_id=%s | count=%s",
+        user_id,
+        len(appointments),
+    )
+
     return appointments
 
 
-@appointment_router.patch(
-    "/appointments/{appointment_id}",
-    response_model=AppointmentPublic,
-)
+@appointment_router.patch("/appointments/{appointment_id}", response_model=AppointmentPublic)
 def update_appointment(
     appointment_id: int,
     appointment_data: AppointmentUpdate,
     session: Session = Depends(get_session),
 ):
-    """
-    Partially update an appointment.
-
-    If the destination address changes, the distance cache is checked again
-    using the user's current stored address.
-    """
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
+        logger.warning("Update appointment failed | appointment_id=%s not found", appointment_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
@@ -142,15 +125,26 @@ def update_appointment(
         user = session.get(User, appointment.user_id)
 
         if not user:
+            logger.warning(
+                "Update appointment failed | appointment_id=%s | associated user_id=%s not found",
+                appointment_id,
+                appointment.user_id,
+            )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Associated user not found",
             )
 
+        logger.info(
+            "Appointment destination changed | appointment_id=%s | new_destination=%s",
+            appointment_id,
+            appointment_data_dump["destination_address"],
+        )
+
         distance = get_or_create_distance(
             session=session,
-            origin_address=user.address,
-            destination_address=appointment_data_dump["destination_address"],
+            origin_address=user.address.strip().lower(),
+            destination_address=appointment_data_dump["destination_address"].lower(),
         )
 
         appointment.distance_id = distance.id
@@ -163,6 +157,8 @@ def update_appointment(
     session.commit()
     session.refresh(appointment)
 
+    logger.info("Appointment updated | appointment_id=%s", appointment_id)
+
     return appointment
 
 
@@ -171,12 +167,10 @@ def delete_appointment(
     appointment_id: int,
     session: Session = Depends(get_session),
 ):
-    """
-    Delete an appointment by ID.
-    """
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
+        logger.warning("Delete appointment failed | appointment_id=%s not found", appointment_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
@@ -184,6 +178,8 @@ def delete_appointment(
 
     session.delete(appointment)
     session.commit()
+
+    logger.info("Appointment deleted | appointment_id=%s", appointment_id)
 
     return {
         "message": "Appointment deleted",

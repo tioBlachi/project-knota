@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 
 class DistanceBase(SQLModel):
-    origin_address: str = Field(index=True)
-    destination_address: str = Field(index=True)
+    origin_address: str
+    destination_address: str
     roundtrip_distance: float
 
 

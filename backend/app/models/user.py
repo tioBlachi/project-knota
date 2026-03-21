@@ -4,6 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from sqlmodel import SQLModel, Field, Relationship
+from pydantic import EmailStr
 
 if TYPE_CHECKING:
     from .appointment import Appointment
@@ -18,7 +19,7 @@ class UserBase(SQLModel):
     last_name: str
     company_name: str | None = None
     address: str
-    email: str = Field(index=True, unique=True)
+    email: EmailStr = Field(index=True, unique=True)
 
 
 class User(UserBase, table=True):
@@ -43,7 +44,7 @@ class UserPublic(UserBase):
 
 
 class UserLogin(SQLModel):
-    email: str
+    email: EmailStr
     password: str
 
 
@@ -52,5 +53,5 @@ class UserUpdate(SQLModel):
     last_name: str | None = None
     company_name: str | None = None
     address: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     password: str | None = None

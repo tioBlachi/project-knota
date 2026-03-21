@@ -30,6 +30,8 @@ def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
     If so, raises an HTTPException. If the email is unique, the password is hashed before storage
     into the database. Returns the UserPublic that does not contain their password.
     """
+
+
     existing_user = session.exec(
         select(User).where(User.email == user_data.email)
     ).first()
@@ -43,11 +45,11 @@ def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
     hashed_pw = hash_password(user_data.password)
 
     new_user = User(
-        first_name=user_data.first_name,
-        last_name=user_data.last_name,
-        company_name=user_data.company_name,
-        address=user_data.address,
-        email=user_data.email,
+        first_name=user_data.first_name.strip().title(),
+        last_name=user_data.last_name.strip().title(),
+        company_name=user_data.company_name.strip(),
+        address=user_data.address.strip().lower(),
+        email=user_data.email.strip().lower(),
         hashed_password=hashed_pw,
         join_date=date.today(),
     )
