@@ -1,14 +1,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from dotenv import load_dotenv
 
 from app.db import create_db_and_tables
 from app.routes.addr_router import addr_router
 from app.routes.user_router import user_router
 from app.routes.appointment_router import appointment_router
 
-load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

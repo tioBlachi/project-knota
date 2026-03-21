@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:frontend/pages/login_page.dart';
 import 'package:frontend/widgets/required_label.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
 import 'package:frontend/models/user_models.dart';
