@@ -1,7 +1,8 @@
 from datetime import date
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 from sqlmodel import SQLModel, Field, Relationship
+from pydantic import StringConstraints
 
 if TYPE_CHECKING:
     from .user import User
@@ -10,7 +11,7 @@ if TYPE_CHECKING:
 
 class AppointmentBase(SQLModel):
     client_name: str | None = None
-    destination_address: str
+    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
     appointment_date: date
 
 
@@ -36,8 +37,8 @@ class AppointmentCreate(AppointmentBase):
     Request model used when creating a new appoinment.
     """
     client_name: str | None
-    destination_address: str
-    appointment_date: date
+    # destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
+    # appointment_date: date
 
 
 class AppointmentUpdate(SQLModel):
@@ -46,7 +47,7 @@ class AppointmentUpdate(SQLModel):
     All fields are optional
     """
     client_name: str | None = None
-    destination_address: str | None = None
+    destination_address: Annotated[str | None, StringConstraints(to_lower=True, strip_whitespace=True)] = None
     appointment_date: date | None = None
 
 
@@ -56,8 +57,5 @@ class AppointmentPublic(AppointmentBase):
     """
     id: int
     user_id: int
-    client_name: str | None = None
-    destination_address: str
-    appointment_date: date
     roundtrip_distance: float | None = None
     distance_id: int | None = None

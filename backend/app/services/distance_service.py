@@ -1,16 +1,18 @@
 """
 Service functions related to cached route distances.
 """
-import os
-
 import requests
-from fastapi import HTTPException, status
+
+from fastapi import Depends, HTTPException, status
 from sqlmodel import Session, select
+from sqlalchemy.exc import IntegrityError
 
+from app.db import get_session
 from app.models.distance import Distance
+from app.config import settings
 
 
-GOOGLE_ROUTES_API_KEY = os.getenv("GOOGLE_ROUTES_API_KEY")
+GOOGLE_ROUTES_API_KEY = settings.GOOGLE_ROUTES_API_KEY
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
 
@@ -84,21 +86,23 @@ def calculate_roundtrip_distance(origin_address: str, destination_address: str) 
 
 
 def get_or_create_distance(
-    session: Session,
     origin_address: str,
     destination_address: str,
+    session: Session,
 ) -> Distance:
     """
     Return an existing cached distance row if one exists.
     Otherwise, calculate the roundtrip distance, save it, and return it.
     """
-    origin_address = origin_address.strip().lower()
-    destination_address = destination_address.strip().lower()
+    addr1 = origin_address.strip().lower()
+    addr2 = destination_address.strip().lower()
+
+    clean_origin, clean_dest = sorted([addr1, addr2])
 
     existing_distance = session.exec(
         select(Distance).where(
-            Distance.origin_address == origin_address,
-            Distance.destination_address == destination_address,
+            Distance.origin_address == clean_origin,
+            Distance.destination_address == clean_dest,
         )
     ).first()
 
@@ -106,18 +110,27 @@ def get_or_create_distance(
         return existing_distance
 
     roundtrip_distance = calculate_roundtrip_distance(
-        origin_address=origin_address,
-        destination_address=destination_address,
+        origin_address=clean_origin,
+        destination_address=clean_dest,
     )
 
-    new_distance = Distance(
-        origin_address=origin_address,
-        destination_address=destination_address,
-        roundtrip_distance=roundtrip_distance,
-    )
-
-    session.add(new_distance)
-    session.commit()
-    session.refresh(new_distance)
-
-    return new_distance
+    new_distance = Distance.model_validate({
+        'origin_address': clean_origin,
+        'destination_address': clean_dest,
+        'roundtrip_distance': roundtrip_distance,
+    })
+    
+    try:
+        session.add(new_distance)
+        session.commit()
+        session.refresh(new_distance)
+        return new_distance
+    except IntegrityError:
+        session.rollback()
+        return session.exec(
+            select(Distance).where(
+                Distance.origin_address == clean_origin,
+                Distance.destination_address == clean_dest,
+            )
+        ).one()
+    

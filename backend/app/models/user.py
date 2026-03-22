@@ -1,14 +1,13 @@
 """File containing data and table models related to User
 """
 from datetime import date
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import EmailStr
+from pydantic import EmailStr, StringConstraints
 
 if TYPE_CHECKING:
     from .appointment import Appointment
-
 
 class UserBase(SQLModel):
     """
@@ -18,8 +17,8 @@ class UserBase(SQLModel):
     first_name: str
     last_name: str
     company_name: str | None = None
-    address: str
-    email: EmailStr = Field(index=True, unique=True)
+    address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
+    email: Annotated[EmailStr, Field(index=True, unique=True), StringConstraints(to_lower=True, strip_whitespace=True)]
 
 
 class User(UserBase, table=True):
@@ -27,7 +26,7 @@ class User(UserBase, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     hashed_password: str
-    join_date: date
+    join_date: date = Field(default=date.today())
     appointments: list['Appointment'] = Relationship(back_populates='user', cascade_delete=True)
 
 
@@ -44,7 +43,7 @@ class UserPublic(UserBase):
 
 
 class UserLogin(SQLModel):
-    email: EmailStr
+    email: Annotated[EmailStr, StringConstraints(to_lower=True, strip_whitespace=True)]
     password: str
 
 
@@ -52,6 +51,6 @@ class UserUpdate(SQLModel):
     first_name: str | None = None
     last_name: str | None = None
     company_name: str | None = None
-    address: str | None = None
-    email: EmailStr | None = None
+    address: Annotated[str | None, StringConstraints(to_lower=True, strip_whitespace=True)] = None
+    email: Annotated[EmailStr | None, StringConstraints(to_lower=True, strip_whitespace=True)] = None
     password: str | None = None

@@ -1,15 +1,17 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, CheckConstraint
+
+from pydantic import StringConstraints
 
 if TYPE_CHECKING:
     from .appointment import Appointment
 
 
 class DistanceBase(SQLModel):
-    origin_address: str
-    destination_address: str
+    origin_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
+    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
     roundtrip_distance: float
 
 
@@ -21,6 +23,9 @@ class Distance(DistanceBase, table=True):
             'destination_address',
             name='uq_distance_route',
         ),
+        CheckConstraint(
+            'origin_address < destination_address',
+            name='check_address_order'),
     )
 
     id: int | None = Field(default=None, primary_key=True)
