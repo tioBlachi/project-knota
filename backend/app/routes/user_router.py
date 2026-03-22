@@ -6,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from app.db import get_session
+from app.db import get_session, engine
 from app.models.user import User, UserCreate, UserPublic, UserUpdate, UserLogin
 from app.core.security import hash_password, verify_password
 
@@ -24,35 +24,25 @@ def get_user(user_id: int, session: Session = Depends(get_session)):
 
 
 @user_router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
-def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
+def create_user(user_in: UserCreate, session: Session = Depends(get_session)):
     """
     Creates a user using the UserCreate class. Checks if email already exists in the database
     If so, raises an HTTPException. If the email is unique, the password is hashed before storage
     into the database. Returns the UserPublic that does not contain their password.
     """
 
-
-    existing_user = session.exec(
-        select(User).where(User.email == user_data.email)
-    ).first()
-
-    if existing_user:
+    if session.exec(select(User).where(User.email == user_in.email)).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with that email already exists",
         )
+    
+    user_data = user_in.model_dump()
 
-    hashed_pw = hash_password(user_data.password)
+    pt_password = user_data.pop('password')
+    user_data['hashed_password'] = hash_password(pt_password)
 
-    new_user = User(
-        first_name=user_data.first_name.strip().title(),
-        last_name=user_data.last_name.strip().title(),
-        company_name=user_data.company_name.strip(),
-        address=user_data.address.strip().lower(),
-        email=user_data.email.strip().lower(),
-        hashed_password=hashed_pw,
-        join_date=date.today(),
-    )
+    new_user = User.model_validate(user_data)
 
     session.add(new_user)
     session.commit()
@@ -73,25 +63,23 @@ def update_user(
     updated in the database
     """
     user = session.get(User, user_id)
-
     if not user:
         raise HTTPException(status_code=404, detail='User not found')
     
     user_data_dump = user_data.model_dump(exclude_unset=True)
 
     if 'password' in user_data_dump:
-        user.hashed_password = hash_password(user_data_dump.pop('password'))
+        pw = user_data_dump.pop('password')
+        user_data_dump['hashed_password'] = hash_password(pw)
 
     if 'email' in user_data_dump:
         existing_user = session.exec(
             select(User).where(User.email == user_data_dump['email'], User.id != user_id)
         ).first()
-
         if existing_user:
             raise HTTPException(status_code=400, detail='Email already in use')
 
-    for key, value in user_data_dump.items():
-        setattr(user, key, value)
+    user.sqlmodel_update(user_data_dump)
 
     session.add(user)
     session.commit()

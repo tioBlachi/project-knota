@@ -43,15 +43,14 @@ def create_appointment(
         destination_address=appointment_data.destination_address,
     )
 
-    new_appointment = Appointment(
-        client_name=appointment_data.client_name,
-        destination_address=appointment_data.destination_address.lower(),
-        appointment_date=appointment_data.appointment_date,
-        roundtrip_distance=distance.roundtrip_distance,
-        user_id=user.id,
-        distance_id=distance.id,
-    )
+    extra_data = {
+        'user_id': user.id,
+        'distance_id': distance.id,
+        'roundtrip_distance': distance.roundtrip_distance
+    }
 
+    new_appointment = Appointment.model_validate(appointment_data, update=extra_data)
+    
     session.add(new_appointment)
     session.commit()
     session.refresh(new_appointment)
@@ -67,13 +66,11 @@ def get_appointment(
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
-        logger.warning("Get appointment failed | appointment_id=%s not found", appointment_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
         )
 
-    logger.info("Retrieved appointment | appointment_id=%s", appointment_id)
     return appointment
 
 
@@ -85,7 +82,6 @@ def get_user_appointments(
     user = session.get(User, user_id)
 
     if not user:
-        logger.warning("Get user appointments failed | user_id=%s not found", user_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
@@ -94,12 +90,6 @@ def get_user_appointments(
     appointments = session.exec(
         select(Appointment).where(Appointment.user_id == user_id)
     ).all()
-
-    logger.info(
-        "Retrieved user appointments | user_id=%s | count=%s",
-        user_id,
-        len(appointments),
-    )
 
     return appointments
 
@@ -113,7 +103,6 @@ def update_appointment(
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
-        logger.warning("Update appointment failed | appointment_id=%s not found", appointment_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
@@ -125,39 +114,25 @@ def update_appointment(
         user = session.get(User, appointment.user_id)
 
         if not user:
-            logger.warning(
-                "Update appointment failed | appointment_id=%s | associated user_id=%s not found",
-                appointment_id,
-                appointment.user_id,
-            )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Associated user not found",
             )
 
-        logger.info(
-            "Appointment destination changed | appointment_id=%s | new_destination=%s",
-            appointment_id,
-            appointment_data_dump["destination_address"],
-        )
-
         distance = get_or_create_distance(
             session=session,
-            origin_address=user.address.strip().lower(),
-            destination_address=appointment_data_dump["destination_address"].lower(),
+            origin_address=user.address,
+            destination_address=appointment_data_dump["destination_address"],
         )
 
         appointment.distance_id = distance.id
         appointment.roundtrip_distance = distance.roundtrip_distance
 
-    for key, value in appointment_data_dump.items():
-        setattr(appointment, key, value)
+    appointment.sqlmodel_update(appointment_data_dump)
 
     session.add(appointment)
     session.commit()
     session.refresh(appointment)
-
-    logger.info("Appointment updated | appointment_id=%s", appointment_id)
 
     return appointment
 
@@ -170,7 +145,6 @@ def delete_appointment(
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
-        logger.warning("Delete appointment failed | appointment_id=%s not found", appointment_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found",
@@ -178,8 +152,6 @@ def delete_appointment(
 
     session.delete(appointment)
     session.commit()
-
-    logger.info("Appointment deleted | appointment_id=%s", appointment_id)
 
     return {
         "message": "Appointment deleted",
