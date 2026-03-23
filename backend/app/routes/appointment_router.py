@@ -1,9 +1,10 @@
 """
 Router for HTTP requests related to appointment CRUD operations.
 """
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlmodel import Session, select, extract
 
 from app.db import get_session
 from app.models.user import User
@@ -14,6 +15,7 @@ from app.models.appointment import (
     AppointmentUpdate,
 )
 from app.services.distance_service import get_or_create_distance
+from app.services.pdf_service import generate_pdf_report
 
 appointment_router = APIRouter(tags=["appointments"])
 
@@ -74,9 +76,10 @@ def get_appointment(
     return appointment
 
 
-@appointment_router.get("/users/{user_id}/appointments", response_model=list[AppointmentPublic])
-def get_user_appointments(
+@appointment_router.get("/users/{user_id}/appointments/reports")
+def get_user_appointments_report(
     user_id: int,
+    year: int | None = datetime.now().year,
     session: Session = Depends(get_session),
 ):
     user = session.get(User, user_id)
@@ -88,10 +91,16 @@ def get_user_appointments(
         )
 
     appointments = session.exec(
-        select(Appointment).where(Appointment.user_id == user_id)
+        select(Appointment)
+        .where(Appointment.user_id == user_id)
+        .where(extract('year', Appointment.appointment_date) == year)
+        .order_by(Appointment.appointment_date, Appointment.id)
     ).all()
 
-    return appointments
+    if len(appointments) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No appointments found for {year}')
+    
+    return generate_pdf_report(appointments, user, year)
 
 
 @appointment_router.patch("/appointments/{appointment_id}", response_model=AppointmentPublic)
