@@ -16,7 +16,7 @@ class UserBase(SQLModel):
     """
     first_name: str
     last_name: str
-    company_name: str | None = None
+    company_name: str | None
     address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
     email: Annotated[EmailStr, Field(index=True, unique=True), StringConstraints(to_lower=True, strip_whitespace=True)]
 
