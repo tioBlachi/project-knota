@@ -61,6 +61,7 @@ def get_appointment_list(
     appointments = session.exec(
         select(Appointment)
         .where(Appointment.user_id == current_user.id)
+        .order_by(Appointment.appointment_date)
     ).all()
 
     return appointments
