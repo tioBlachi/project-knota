@@ -2,13 +2,15 @@
 Router for HTTP requests that are relevant to user CRUD operations
 """
 from datetime import date
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
 from app.db import get_session, engine
 from app.models.user import User, UserCreate, UserPublic, UserUpdate, UserLogin
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, verify_password, create_access_token
 
 user_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -89,18 +91,21 @@ def update_user(
 
 
 @user_router.post('/login')
-def login_user(user_data: UserLogin, session: Session = Depends(get_session)):
+def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+               session: Session = Depends(get_session)):
     user = session.exec(
-        select(User).where(User.email == user_data.email)
+        select(User).where(User.email == form_data.username)
     ).first()
 
-    if not user:
-        raise HTTPException(status_code=401, detail='Invalid credentials')
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials')
     
-    if not verify_password(user_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail='Invalid credentials')
+    access_token = create_access_token(data={'sub': str(user.id)})
     
-    return {'message': 'Login successful', 'user_id': user.id}
+    return {
+        'access_token': access_token,
+        'token_type': 'bearer'
+        }
 
 
 @user_router.delete('/{user_id}')

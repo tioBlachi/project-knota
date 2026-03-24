@@ -2,8 +2,10 @@
 Router for HTTP requests related to appointment CRUD operations.
 """
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select, extract
 
 from app.db import get_session
@@ -16,6 +18,7 @@ from app.models.appointment import (
 )
 from app.services.distance_service import get_or_create_distance
 from app.services.pdf_service import generate_pdf_report
+from app.core.security import get_current_user
 
 appointment_router = APIRouter(tags=["appointments"])
 
@@ -78,16 +81,18 @@ def get_appointment(
 
 @appointment_router.get("/users/{user_id}/appointments/reports")
 def get_user_appointments_report(
+    current_user: Annotated[User, Depends(get_current_user)],
     user_id: int,
-    year: int | None = datetime.now().year,
+    year: int | None = None,
     session: Session = Depends(get_session),
-):
+) -> Response:
+    report_year = year or datetime.now().year
     user = session.get(User, user_id)
-
-    if not user:
+    
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='You do not have permission to acces this user\'s reports'
         )
 
     appointments = session.exec(
@@ -100,7 +105,7 @@ def get_user_appointments_report(
     if len(appointments) == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No appointments found for {year}')
     
-    return generate_pdf_report(appointments, user, year)
+    return generate_pdf_report(appointments, user, report_year)
 
 
 @appointment_router.patch("/appointments/{appointment_id}", response_model=AppointmentPublic)
