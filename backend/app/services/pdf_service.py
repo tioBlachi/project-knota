@@ -21,7 +21,7 @@ def generate_pdf_report(appointments: list[Appointment], user: User, year: int):
 
     # Header - Total width 190
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(30, 10, text='Date', align='C', border=1)
+    pdf.cell(30, 10, txt='Date', align='C', border=1)
     pdf.cell(50, 10, txt='Client Name', align='C', border=1)
     pdf.cell(85, 10, txt='Client Address', align='C', border=1)
     pdf.cell(25, 10, txt='Miles', border=1, ln=True, align='C')
