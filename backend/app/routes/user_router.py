@@ -9,20 +9,15 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
 from app.db import get_session, engine
-from app.models.user import User, UserCreate, UserPublic, UserUpdate, UserLogin
-from app.core.security import hash_password, verify_password, create_access_token
+from app.models.user import User, UserCreate, UserPublic, UserUpdate
+from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 
-user_router = APIRouter(prefix="/users", tags=["users"])
+user_router = APIRouter(prefix="/user", tags=["users"])
 
 
-@user_router.get('/{user_id}', response_model=UserPublic)
-def get_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
-
-    if not user:
-        raise HTTPException(status_code=404, detail='User not found')
-    
-    return user
+@user_router.get('/me', response_model=UserPublic)
+def get_user(current_user: Annotated[User, Depends(get_current_user)], session: Session = Depends(get_session)):
+    return current_user
 
 
 @user_router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
@@ -57,6 +52,7 @@ def create_user(user_in: UserCreate, session: Session = Depends(get_session)):
 def update_user(
     user_id: int,
     user_data: UserUpdate,
+    current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
 ):
     """Updates only the values given in the request body, if the user exists in the database. Otherwise, a 404 User 
@@ -64,6 +60,9 @@ def update_user(
     already exists (to prevent multiple accounts patching the same email to an account after creation). User is then
     updated in the database
     """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Forbidden')
+    
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail='User not found')
@@ -109,7 +108,14 @@ def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 
 
 @user_router.delete('/{user_id}')
-def delete_user(user_id: int, session: Session = Depends(get_session)):
+def delete_user(user_id: int,
+                current_user: Annotated[User, Depends(get_current_user)],
+                session: Session = Depends(get_session)):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Forbidden')
+    
     user = session.get(User, user_id)
 
     if not user:
