@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 /// A reusable widget to display a label with a red asterisk.
 class RequiredLabel extends StatelessWidget {
   final String label;
-  final String asterisk; // You can pass '*' or customize it
+  final String asterisk;
+  final bool isRequired;
 
   const RequiredLabel({
     super.key, 
     required this.label, 
     this.asterisk = ' *',
+    this.isRequired = true,
   });
 
   @override
@@ -20,6 +22,7 @@ class RequiredLabel extends StatelessWidget {
             text: label,
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
+          if (isRequired)
           TextSpan(
             text: asterisk,
             style: const TextStyle(

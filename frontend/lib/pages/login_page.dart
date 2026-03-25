@@ -116,6 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                       // login button
                       FilledButton(
                         onPressed: () async {
+                          debugPrint('Login button pressed');
                           if (_formGlobalKey.currentState!.validate()) {
                             _formGlobalKey.currentState!.save();
                           
@@ -126,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                               await StorageService.saveToken(token);
                               
                               if (!context.mounted) return;
-
+                              
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(builder: (context) => const HomePage()),
@@ -137,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
 
                               scaffoldMessenger.showSnackBar(
                                 SnackBar(
-                                  content: Text(e.toString().replaceFirst('Exception ', '')),
+                                  content: Text(e.toString().replaceFirst('Exception: ', '')),
                                   backgroundColor: Colors.red,),
                               );
                             }

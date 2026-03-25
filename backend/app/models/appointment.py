@@ -37,8 +37,8 @@ class AppointmentCreate(AppointmentBase):
     Request model used when creating a new appoinment.
     """
     client_name: str | None
-    # destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
-    # appointment_date: date
+    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
+    appointment_date: date
 
 
 class AppointmentUpdate(SQLModel):

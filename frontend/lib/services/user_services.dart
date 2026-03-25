@@ -76,7 +76,7 @@ class UserServices {
     }
   }
 
-  static Future<List<AppointmentPublic>> getUserAppointments() async {
+  static Future<List<AppointmentPublic>> getUserAppointments(int year) async {
     final String? token = await StorageService.getToken();
     
     if (token == null) {
@@ -94,7 +94,8 @@ class UserServices {
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((item) => AppointmentPublic.fromJson(item)).toList();
     } else if (response.statusCode == 401) {
       await StorageService.deleteToken();
       throw Exception('Session expired');
