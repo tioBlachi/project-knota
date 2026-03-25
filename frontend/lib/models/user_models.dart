@@ -45,3 +45,28 @@ class UserLogin {
     };
   }
 }// UserLogin
+
+
+class UserPublic {
+  final int id;
+  final String joinDate;
+
+  UserPublic({
+    required this.id,
+    required this.joinDate
+  });
+
+  factory UserPublic.fromJson(Map<String, dynamic> json) {
+    return UserPublic(
+      id: json['id'] is String ? int.parse(json['id']) : json['id'],
+      joinDate: json['join_date'],
+      );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'join_date': joinDate,
+    };
+  }
+} // UserPublic

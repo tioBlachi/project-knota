@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:frontend/pages/registation_page.dart';
+import 'package:frontend/services/user_services.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +13,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formGlobalKey = GlobalKey<FormState>();
   bool _hidePassword = true;
+  String email = '';
+  String password = '';
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +69,7 @@ class _LoginPageState extends State<LoginPage> {
                           }
                           return null;
                         },
+                        onSaved: (value) => email = value!.toLowerCase().trim(),
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: 'Email',
@@ -89,6 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                           }
                           return null;
                         },
+                        onSaved: (value) => password = value!,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: 'Password',
@@ -111,8 +116,30 @@ class _LoginPageState extends State<LoginPage> {
         
                       // login button
                       FilledButton(
-                        onPressed: () {
-                          _formGlobalKey.currentState!.validate();
+                        onPressed: () async {
+                          if (_formGlobalKey.currentState!.validate()) {
+                            _formGlobalKey.currentState!.save();
+                          
+                            final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                            try {
+                              final String token = await UserServices.login(email, password);
+                              debugPrint('This is the token: $token');
+                              if (!context.mounted) return;
+
+                              scaffoldMessenger.showSnackBar(
+                                  const SnackBar(content: Text('Success'))
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString().replaceFirst('Exception ', '')),
+                                  backgroundColor: Colors.red,),
+                              );
+                            }
+                          }
                         },
                         child: Text('Login'),
                       ),
