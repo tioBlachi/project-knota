@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session, select, extract
 
 from app.db import get_session
@@ -50,7 +51,7 @@ def create_appointment(
     session.commit()
     session.refresh(new_appointment)
 
-    return new_appointment
+    return jsonable_encoder(new_appointment)
 
 
 @appointment_router.get('/', response_model=list[AppointmentPublic])

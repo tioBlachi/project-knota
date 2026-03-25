@@ -17,7 +17,7 @@ class AppointmentPublic {
     return AppointmentPublic(
       id: json['id'],
       clientName: json['client_name'],
-      destinationAddress: json['destination_address'],
+      destinationAddress: json['destination_address'].toString().toUpperCase(),
       roundtripDistance: (json['roundtrip_distance'] as num).toDouble(),
       appointmentDate: DateTime.parse(json['appointment_date']),
     );
