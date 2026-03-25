@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:frontend/pages/registation_page.dart';
+import 'package:frontend/services/storage_service.dart';
 import 'package:frontend/services/user_services.dart';
 
 class LoginPage extends StatefulWidget {
@@ -124,7 +125,8 @@ class _LoginPageState extends State<LoginPage> {
 
                             try {
                               final String token = await UserServices.login(email, password);
-                              debugPrint('This is the token: $token');
+                              await StorageService.saveToken(token);
+                              
                               if (!context.mounted) return;
 
                               scaffoldMessenger.showSnackBar(
