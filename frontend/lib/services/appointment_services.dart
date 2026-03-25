@@ -41,3 +41,27 @@ Future<void> createAppointment({
   }
 }
 
+
+Future<void> deleteAppointment(int appointmentId) async {
+  final String? token = await StorageService.getToken();
+  
+  if (token == null) throw Exception('No token found.');
+
+  
+  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/$appointmentId');
+
+  final response = await http.delete(
+    uri,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    final errorData = jsonDecode(response.body);
+    throw Exception(errorData['detail'] ?? 'Failed to delete appointment');
+  }
+}
+
+

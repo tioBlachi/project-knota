@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pages/add_appointment.dart';
+import 'package:frontend/services/appointment_services.dart'
+    as AppointmentServices;
 import 'package:table_calendar/table_calendar.dart';
 import 'package:frontend/models/appointment_models.dart';
 import 'package:frontend/pages/login_page.dart';
@@ -27,7 +29,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   DateTime get _calendarFirstDay => DateTime.utc(_selectedYear, 1, 1);
-  DateTime get _calendarLastDay => DateTime.utc(_selectedYear, 12, 31);
 
   DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
@@ -65,6 +66,59 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _confirmDelete(
+    BuildContext context,
+    AppointmentPublic appt,
+  ) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Appointment?"),
+        content: Text(
+          "Are you sure you want to remove the appointment for ${appt.clientName}?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, false), // Returns 'false' to 'confirm'
+            child: const Text("Cancel"),
+          ),
+          // 2. The Delete Button
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, true), // Returns 'true' to 'confirm'
+            child: const Text(
+              "Delete",
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await AppointmentServices.deleteAppointment(appt.id);
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Appointment deleted'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        await _loadProfile();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
   List<AppointmentPublic> _getEventsForDay(DateTime day) {
     return _groupedAppointments[_normalizeDate(day)] ?? [];
   }
@@ -72,7 +126,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final int currentYear = DateTime.now().year;
-    final List<int> yearOptions = List.generate(6, (index) => (currentYear - 3) + index);
+    final List<int> yearOptions = List.generate(
+      6,
+      (index) => (currentYear - 3) + index,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -226,14 +283,13 @@ class _HomePageState extends State<HomePage> {
             context,
             MaterialPageRoute(builder: (context) => const AddAppointmentPage()),
           );
-          
+
           if (refresh == true) {
             _loadProfile(); // Re-fetch data to show the new dots
           }
         },
         child: const Icon(Icons.add),
       ),
-
     );
   }
 
@@ -257,9 +313,8 @@ class _HomePageState extends State<HomePage> {
             title: Text(appt.clientName),
             subtitle: Text(appt.destinationAddress),
             trailing: Text("${appt.roundtripDistance.toStringAsFixed(1)} mi"),
-            onTap: () {
-              // Future: View/Edit detail
-            },
+            onLongPress: () => _confirmDelete(context, appt),
+            //onTap: () => _updateAppt(context, appt),
           ),
         );
       },
