@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:frontend/pages/registation_page.dart';
+import 'package:frontend/services/storage_service.dart';
+import 'package:frontend/services/user_services.dart';
+import 'package:frontend/pages/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,20 +15,19 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formGlobalKey = GlobalKey<FormState>();
   bool _hidePassword = true;
+  String email = '';
+  String password = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // centerTitle: true,
-        // title: const Text("Login"),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Center(
             child: Column(
-              //mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.network(
                   'https://fastly.picsum.photos/id/200/367/267.jpg?hmac=GFqST8d65ZPaEGEiCClMdf7MXamTdDadgB7lNZXYWP8',
@@ -66,6 +68,7 @@ class _LoginPageState extends State<LoginPage> {
                           }
                           return null;
                         },
+                        onSaved: (value) => email = value!.toLowerCase().trim(),
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: 'Email',
@@ -89,6 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                           }
                           return null;
                         },
+                        onSaved: (value) => password = value!,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: 'Password',
@@ -111,8 +115,33 @@ class _LoginPageState extends State<LoginPage> {
         
                       // login button
                       FilledButton(
-                        onPressed: () {
-                          _formGlobalKey.currentState!.validate();
+                        onPressed: () async {
+                          if (_formGlobalKey.currentState!.validate()) {
+                            _formGlobalKey.currentState!.save();
+                          
+                            final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                            try {
+                              final String token = await UserServices.login(email, password);
+                              await StorageService.saveToken(token);
+                              
+                              if (!context.mounted) return;
+
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const HomePage()),
+                                (route) => false,
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString().replaceFirst('Exception ', '')),
+                                  backgroundColor: Colors.red,),
+                              );
+                            }
+                          }
                         },
                         child: Text('Login'),
                       ),
