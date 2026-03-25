@@ -6,10 +6,12 @@ import 'package:frontend/widgets/required_label.dart';
 
 class AddressAutocomplete extends StatefulWidget {
   final ValueChanged<String> onSelected;
+  final bool isRequired;
 
   const AddressAutocomplete({
     super.key,
     required this.onSelected,
+    this.isRequired = true,
   });
 
   @override
@@ -42,7 +44,9 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
     });
 
     try {
-      final suggestions = await AddressService.fetchSuggestions(normalizedQuery);
+      final suggestions = await AddressService.fetchSuggestions(
+        normalizedQuery,
+      );
 
       if (!mounted) return;
       setState(() {
@@ -102,14 +106,19 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
           autovalidateMode: AutovalidateMode.onUserInteraction,
           onChanged: _onAddressChanged,
           validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Address is required';
+            if (widget.isRequired) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Address is required';
+              }
             }
             return null;
           },
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            label: RequiredLabel(label: 'Address'),
+            label: RequiredLabel(
+              label: 'Address',
+              isRequired: widget.isRequired,
+            ),
             suffixIcon: _isLoadingAddresses
                 ? const Padding(
                     padding: EdgeInsets.all(12),
@@ -120,8 +129,8 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
                     ),
                   )
                 : _selectedAddress != null
-                    ? const Icon(Icons.check_circle_outline)
-                    : null,
+                ? const Icon(Icons.check_circle_outline)
+                : null,
           ),
         ),
 

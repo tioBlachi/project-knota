@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pages/add_appointment.dart';
+import 'package:frontend/pages/update_appointment.dart';
 import 'package:frontend/services/appointment_services.dart'
     as AppointmentServices;
 import 'package:table_calendar/table_calendar.dart';
@@ -314,7 +315,18 @@ class _HomePageState extends State<HomePage> {
             subtitle: Text(appt.destinationAddress),
             trailing: Text("${appt.roundtripDistance.toStringAsFixed(1)} mi"),
             onLongPress: () => _confirmDelete(context, appt),
-            //onTap: () => _updateAppt(context, appt),
+            onTap: () async {
+              final bool? refresh = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UpdateAppointmentPage(appointment: appt),
+                ),
+              );
+              
+              if (refresh == true) {
+                _loadProfile(); // Refresh the dots and list
+              }
+            },
           ),
         );
       },

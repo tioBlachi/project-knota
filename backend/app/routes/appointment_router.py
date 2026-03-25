@@ -135,14 +135,15 @@ def update_appointment(
 
     appointment_data_dump = appointment_data.model_dump(exclude_unset=True)
 
-    distance = get_or_create_distance(
-        session=session,
-        origin_address=current_user.address,
-        destination_address=appointment_data_dump["destination_address"],
-    )
+    if 'destination-address' in appointment_data_dump:
+        distance = get_or_create_distance(
+            session=session,
+            origin_address=current_user.address,
+            destination_address=appointment_data_dump["destination_address"],
+        )
 
-    appointment.distance_id = distance.id
-    appointment.roundtrip_distance = distance.roundtrip_distance
+        appointment.distance_id = distance.id
+        appointment.roundtrip_distance = distance.roundtrip_distance
 
     appointment.sqlmodel_update(appointment_data_dump)
 

@@ -65,3 +65,32 @@ Future<void> deleteAppointment(int appointmentId) async {
 }
 
 
+Future<void> updateAppointment({
+  required int id,
+  String? clientName,
+  String? address,
+  String? date,
+}) async {
+  final token = await StorageService.getToken();
+  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/$id');
+
+  // Create a map and only add values that are NOT null
+  final Map<String, dynamic> body = {};
+  if (clientName != null) body['client_name'] = clientName;
+  if (address != null) body['destination_address'] = address;
+  if (date != null) body['appointment_date'] = date;
+
+  final response = await http.patch(
+    uri,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode(body),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(jsonDecode(response.body)['detail'] ?? 'Update failed');
+  }
+}
+
