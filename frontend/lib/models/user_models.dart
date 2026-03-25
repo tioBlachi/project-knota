@@ -49,19 +49,30 @@ class UserLogin {
 
 class UserPublic {
   final int id;
+  final String firstName;
+  final String lastName;
+  final String? companyName;
   final String joinDate;
 
   UserPublic({
     required this.id,
+    required this.firstName,
+    required this.lastName,
+    this.companyName,
     required this.joinDate
   });
 
   factory UserPublic.fromJson(Map<String, dynamic> json) {
     return UserPublic(
       id: json['id'] is String ? int.parse(json['id']) : json['id'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      companyName: json['company_name'],
       joinDate: json['join_date'],
       );
   }
+
+  String get displayName => companyName ?? '$firstName $lastName';
 
   Map<String, dynamic> toJson() {
     return {

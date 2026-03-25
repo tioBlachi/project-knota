@@ -39,6 +39,9 @@ class UserPublic(UserBase):
     The publicly returned response model. Will not return passwords from the backend
     """
     id: int
+    first_name: str
+    last_name: str
+    company_name: str
     join_date: date
 
 

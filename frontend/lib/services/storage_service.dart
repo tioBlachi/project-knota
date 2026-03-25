@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class StorageService {
   static const _storage = FlutterSecureStorage();
@@ -14,5 +15,12 @@ class StorageService {
 
   static Future<void> deleteToken() async {
     await _storage.delete(key: _tokenKey);
+  }
+
+  static Future<bool> isTokenValid() async {
+    final token = await getToken();
+    if (token == null) return false;
+
+    return !JwtDecoder.isExpired(token);
   }
 }

@@ -3,6 +3,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:frontend/pages/registation_page.dart';
 import 'package:frontend/services/storage_service.dart';
 import 'package:frontend/services/user_services.dart';
+import 'package:frontend/pages/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,15 +22,12 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // centerTitle: true,
-        // title: const Text("Login"),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Center(
             child: Column(
-              //mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.network(
                   'https://fastly.picsum.photos/id/200/367/267.jpg?hmac=GFqST8d65ZPaEGEiCClMdf7MXamTdDadgB7lNZXYWP8',
@@ -129,8 +127,10 @@ class _LoginPageState extends State<LoginPage> {
                               
                               if (!context.mounted) return;
 
-                              scaffoldMessenger.showSnackBar(
-                                  const SnackBar(content: Text('Success'))
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const HomePage()),
+                                (route) => false,
                               );
                             } catch (e) {
                               if (!context.mounted) return;
