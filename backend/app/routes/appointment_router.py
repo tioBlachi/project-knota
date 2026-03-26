@@ -4,7 +4,7 @@ Router for HTTP requests related to appointment CRUD operations.
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session, select, extract
 
@@ -67,6 +67,26 @@ def get_appointment_list(
 
     return appointments
 
+@appointment_router.get("/generate/reports/")
+def get_user_appointments_report(
+    current_user: Annotated[User, Depends(get_current_user)],
+    year: int | None = None,
+    session: Session = Depends(get_session),
+) -> Response:
+    report_year = year or datetime.now().year
+
+    appointments = session.exec(
+        select(Appointment)
+        .where(Appointment.user_id == current_user.id)
+        .where(extract('year', Appointment.appointment_date) == report_year)
+        .order_by(Appointment.appointment_date, Appointment.id)
+    ).all()
+
+    if not appointments:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No appointments found for {report_year}')
+    
+    return generate_pdf_report(appointments, current_user, report_year)
+
 
 @appointment_router.get("/{appointment_id}", response_model=AppointmentPublic)
 def get_appointment(
@@ -90,26 +110,6 @@ def get_appointment(
 
     return appointment
 
-
-@appointment_router.get("/reports")
-def get_user_appointments_report(
-    current_user: Annotated[User, Depends(get_current_user)],
-    year: int | None = None,
-    session: Session = Depends(get_session),
-) -> Response:
-    report_year = year or datetime.now().year
-
-    appointments = session.exec(
-        select(Appointment)
-        .where(Appointment.user_id == current_user.id)
-        .where(extract('year', Appointment.appointment_date) == report_year)
-        .order_by(Appointment.appointment_date, Appointment.id)
-    ).all()
-
-    if not appointments:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No appointments found for {report_year}')
-    
-    return generate_pdf_report(appointments, current_user, report_year)
 
 
 @appointment_router.patch("/{appointment_id}", response_model=AppointmentPublic)

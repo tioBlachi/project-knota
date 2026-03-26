@@ -199,6 +199,34 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(
+                Icons.picture_as_pdf,
+                color: Colors.deepPurple,
+              ),
+              title: const Text('Generate Mileage Report'),
+              subtitle: Text('Current Year: $_selectedYear'),
+              onTap: () async {
+                Navigator.pop(context); // Close the drawer first
+                try {
+                  await AppointmentServices.generateAndShareReport(
+                    _selectedYear,
+                  );
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          e.toString().replaceFirst('Exception: ', ''),
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
           ],
         ),
       ),
@@ -241,6 +269,10 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           TableCalendar(
+            availableCalendarFormats: const {
+              CalendarFormat.month: 'Month',
+            },
+            calendarFormat: CalendarFormat.month,
             firstDay: _calendarFirstDay,
             lastDay: DateTime.utc(currentYear + 2, 12, 31),
             focusedDay: _focusedDay,
@@ -282,7 +314,11 @@ class _HomePageState extends State<HomePage> {
         onPressed: () async {
           final bool? refresh = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddAppointmentPage()),
+            MaterialPageRoute(
+              builder: (context) => AddAppointmentPage(
+                initialDate: _selectedDay ?? _focusedDay,
+              ),
+            ),
           );
 
           if (refresh == true) {
@@ -319,12 +355,13 @@ class _HomePageState extends State<HomePage> {
               final bool? refresh = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => UpdateAppointmentPage(appointment: appt),
+                  builder: (context) =>
+                      UpdateAppointmentPage(appointment: appt),
                 ),
               );
-              
+
               if (refresh == true) {
-                _loadProfile(); // Refresh the dots and list
+                _loadProfile();
               }
             },
           ),

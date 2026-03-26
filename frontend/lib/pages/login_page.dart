@@ -116,7 +116,6 @@ class _LoginPageState extends State<LoginPage> {
                       // login button
                       FilledButton(
                         onPressed: () async {
-                          debugPrint('Login button pressed');
                           if (_formGlobalKey.currentState!.validate()) {
                             _formGlobalKey.currentState!.save();
                           
