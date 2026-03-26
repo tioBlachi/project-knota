@@ -62,7 +62,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
                   border: OutlineInputBorder(),
                   hintText: "Enter client name",
                 ),
-                validator: (value) => value == null || value.isEmpty ? "Required" : null,
+                validator: (value) => null// value == null || value.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 20),
               
@@ -101,7 +101,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
                   if (picked != null) {
                     setState(() {
                       _selectedDate = picked;
-                      _dateController.text = DateFormat('yyyy-MM-dartdd').format(picked);
+                      _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
                     });
                   }
                 },
@@ -119,53 +119,41 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
   }
 
   Future<void> _submitUpdate() async {
-    if (_formKey.currentState!.validate()) {
-      String? nameUpdate;
-      String? addressUpdate;
-      String? dateUpdate;
+  if (_formKey.currentState!.validate()) {
+    String? nameUpdate;
+    String? addressUpdate;
+    String? dateUpdate;
 
-      // 1. Check for Name change
-      if (_nameController.text.trim() != widget.appointment.clientName) {
-        nameUpdate = _nameController.text.trim();
-      }
+    final newName = _nameController.text.trim();
+    if (newName != widget.appointment.clientName && newName.isNotEmpty) {
+      nameUpdate = newName;
+    }
 
-      // 2. Check for Address change
-      if (_updatedAddress != null && _updatedAddress != widget.appointment.destinationAddress) {
-        addressUpdate = _updatedAddress;
-      }
+    if (_updatedAddress != null && _updatedAddress!.isNotEmpty && _updatedAddress != widget.appointment.destinationAddress) {
+      addressUpdate = _updatedAddress;
+    }
 
-      // 3. Check for Date change (comparing YYYY-MM-DD strings)
-      final String formattedNewDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      final String formattedOldDate = DateFormat('yyyy-MM-dd').format(widget.appointment.appointmentDate);
-      
-      if (formattedNewDate != formattedOldDate) {
-        dateUpdate = formattedNewDate;
-      }
+    final String formattedNewDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final String formattedOldDate = DateFormat('yyyy-MM-dd').format(widget.appointment.appointmentDate);
+    
+    if (formattedNewDate != formattedOldDate) {
+      dateUpdate = formattedNewDate;
+    }
 
-      // 4. If nothing changed, just close the page
-      if (nameUpdate == null && addressUpdate == null && dateUpdate == null) {
-        Navigator.pop(context);
-        return;
-      }
+    if (nameUpdate == null && addressUpdate == null && dateUpdate == null) {
+      Navigator.pop(context);
+      return;
+    }
 
-      try {
-        await AppointmentServices.updateAppointment(
-          id: widget.appointment.id,
-          clientName: nameUpdate,
-          address: addressUpdate,
-          date: dateUpdate,
-        );
-
-        if (!mounted) return;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Appointment updated successfully")),
-        );
-        
-        // Return 'true' so HomePage knows to refresh the data
-        Navigator.pop(context, true);
-
-      } catch (e) {
+    try {
+      await AppointmentServices.updateAppointment(
+        id: widget.appointment.id,
+        clientName: nameUpdate,
+        address: addressUpdate,
+        date: dateUpdate,
+      );
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

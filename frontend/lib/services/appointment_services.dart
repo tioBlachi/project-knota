@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:frontend/config/api_config.dart';
 import 'package:frontend/services/storage_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> createAppointment({
@@ -94,3 +96,33 @@ Future<void> updateAppointment({
   }
 }
 
+
+Future<void> generateAndShareReport(int year) async {
+  final token = await StorageService.getToken();
+  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/generate/reports/?year=$year');
+
+  final response = await http.get(
+    uri,
+    headers: {'Authorization': 'Bearer $token'},
+  );
+
+  if (response.statusCode == 200) {
+    final tempDir = await getTemporaryDirectory();
+    final filePath = '${tempDir.path}/mileage_report_$year.pdf';
+    final file = File(filePath);
+
+    await file.writeAsBytes(response.bodyBytes);
+
+    final params = ShareParams(
+      files: [XFile(filePath)],
+      subject: '$year Mileage Report',
+      text: 'Attached is the mileage report for $year.',
+    );
+
+    await SharePlus.instance.share(params);
+    
+  } else {
+    final error = jsonDecode(response.body);
+    throw Exception(error['detail'] ?? 'Failed to generate report');
+  }
+}

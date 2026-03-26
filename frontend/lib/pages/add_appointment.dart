@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/services/appointment_services.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
-import 'package:frontend/services/appointment_services.dart';
 
 class AddAppointmentPage extends StatefulWidget {
-  const AddAppointmentPage({super.key});
+  final DateTime? initialDate;
+  const AddAppointmentPage({super.key, this.initialDate});
 
   @override
   State<AddAppointmentPage> createState() => _AddAppointmentPageState();
@@ -14,10 +14,17 @@ class AddAppointmentPage extends StatefulWidget {
 class _AddAppointmentPageState extends State<AddAppointmentPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController(); 
   
   String? _selectedAddress;
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.initialDate ?? DateTime.now();
+    _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
+  }
 
   @override
   void dispose() {
@@ -36,7 +43,6 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        // Format for the text field display
         _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
