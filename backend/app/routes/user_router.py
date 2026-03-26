@@ -6,6 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session, select
 
 from app.db import get_session, engine
@@ -48,7 +49,7 @@ def create_user(user_in: UserCreate, session: Session = Depends(get_session)):
     return new_user
 
 
-@user_router.patch('/{user_id}', response_model=UserPublic)
+@user_router.patch('/{user_id}/', response_model=UserPublic)
 def update_user(
     user_id: int,
     user_data: UserUpdate,
@@ -86,7 +87,9 @@ def update_user(
     session.commit()
     session.refresh(user)
 
-    return user
+    user_data = jsonable_encoder(user)
+
+    return user_data
 
 
 @user_router.post('/login')
@@ -107,7 +110,7 @@ def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         }
 
 
-@user_router.delete('/{user_id}')
+@user_router.delete('/{user_id}/')
 def delete_user(user_id: int,
                 current_user: Annotated[User, Depends(get_current_user)],
                 session: Session = Depends(get_session)):

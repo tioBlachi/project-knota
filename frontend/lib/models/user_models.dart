@@ -47,11 +47,43 @@ class UserLogin {
 }// UserLogin
 
 
+class UserUpdate {
+  String? firstName;
+  String? lastName;
+  String? companyName;
+  String? address;
+  String? email;
+  String? password;
+
+  UserUpdate({
+    this.firstName,
+    this.lastName,
+    this.companyName,
+    this.address,
+    this.email,
+    this.password,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'first_name': firstName,
+      'last_name': lastName,
+      'company_name': companyName,
+      'address': address,
+      'email': email,
+      'password': password,
+    };
+  }
+} // User Update
+
+
 class UserPublic {
   final int id;
   final String firstName;
   final String lastName;
   final String? companyName;
+  final String email;
+  final String address;
   final String joinDate;
 
   UserPublic({
@@ -59,7 +91,9 @@ class UserPublic {
     required this.firstName,
     required this.lastName,
     this.companyName,
-    required this.joinDate
+    required this.address,
+    required this.joinDate,
+    required this.email,
   });
 
   factory UserPublic.fromJson(Map<String, dynamic> json) {
@@ -68,11 +102,19 @@ class UserPublic {
       firstName: json['first_name'],
       lastName: json['last_name'],
       companyName: json['company_name'],
+      address: json['address'] ?? '',
+      email: json['email'],
       joinDate: json['join_date'],
       );
   }
 
-  String get displayName => companyName ?? '$firstName $lastName';
+  String get displayName {
+    if (companyName == null || companyName!.trim().isEmpty) {
+      return '$firstName $lastName';
+    }
+    return companyName!;
+  }
+
 
   Map<String, dynamic> toJson() {
     return {
