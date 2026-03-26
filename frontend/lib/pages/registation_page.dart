@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:frontend/services/storage_service.dart';
 import 'package:frontend/widgets/required_label.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
 import 'package:frontend/models/user_models.dart';
@@ -255,6 +256,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             );
                             try {
                               await UserServices.createUser(user);
+                              await StorageService.deleteToken();
 
                               ScaffoldMessenger.of(
                                 context,

@@ -16,7 +16,7 @@ class UserBase(SQLModel):
     """
     first_name: str
     last_name: str
-    company_name: str | None
+    company_name: str | None = None
     address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
     email: Annotated[EmailStr, Field(index=True, unique=True), StringConstraints(to_lower=True, strip_whitespace=True)]
 
@@ -39,9 +39,9 @@ class UserPublic(UserBase):
     The publicly returned response model. Will not return passwords from the backend
     """
     id: int
-    first_name: str
-    last_name: str
-    company_name: str
+    # first_name: str
+    # last_name: str
+    # company_name: str
     join_date: date
 
 

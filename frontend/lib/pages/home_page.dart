@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pages/add_appointment.dart';
 import 'package:frontend/pages/update_appointment.dart';
+import 'package:frontend/pages/user_profile.dart';
 import 'package:frontend/services/appointment_services.dart'
     as AppointmentServices;
 import 'package:table_calendar/table_calendar.dart';
@@ -183,7 +184,18 @@ class _HomePageState extends State<HomePage> {
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('My Profile'),
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+                Navigator.pop(context);
+                final bool? updated = await Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => const UserProfilePage())
+              );
+
+              if (updated == true) {
+                _loadProfile(); // Refresh the HomePage to show the new Company/User name
+              }
+
+              },
             ),
             const Divider(),
             ListTile(

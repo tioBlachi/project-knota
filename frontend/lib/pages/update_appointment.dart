@@ -118,49 +118,68 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
     );
   }
 
-  Future<void> _submitUpdate() async {
-  if (_formKey.currentState!.validate()) {
-    String? nameUpdate;
-    String? addressUpdate;
-    String? dateUpdate;
+    Future<void> _submitUpdate() async {
+    if (_formKey.currentState!.validate()) {
+      String? nameUpdate;
+      String? addressUpdate;
+      String? dateUpdate;
 
-    final newName = _nameController.text.trim();
-    if (newName != widget.appointment.clientName && newName.isNotEmpty) {
-      nameUpdate = newName;
-    }
+      // 1. Client Name Logic
+      final trimmedName = _nameController.text.trim();
+      if (trimmedName.isNotEmpty && trimmedName != widget.appointment.clientName) {
+        nameUpdate = trimmedName;
+      }
 
-    if (_updatedAddress != null && _updatedAddress!.isNotEmpty && _updatedAddress != widget.appointment.destinationAddress) {
-      addressUpdate = _updatedAddress;
-    }
+      // 2. Address Logic Shield
+      // We only set addressUpdate if there is a NEW, NON-EMPTY, and DIFFERENT string.
+      // If the user cleared the box, _updatedAddress.trim().isEmpty becomes true, 
+      // addressUpdate remains null, and the backend key is never sent.
+      if (_updatedAddress != null && 
+          _updatedAddress!.trim().isNotEmpty && 
+          _updatedAddress != widget.appointment.destinationAddress) {
+        addressUpdate = _updatedAddress;
+      } else {
+        addressUpdate = null; // Explicitly ensure it's null if cleared or unchanged
+      }
 
-    final String formattedNewDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final String formattedOldDate = DateFormat('yyyy-MM-dd').format(widget.appointment.appointmentDate);
-    
-    if (formattedNewDate != formattedOldDate) {
-      dateUpdate = formattedNewDate;
-    }
+      // 3. Date Logic
+      final String formattedNewDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
+      final String formattedOldDate = DateFormat('yyyy-MM-dd').format(widget.appointment.appointmentDate);
+      
+      if (formattedNewDate != formattedOldDate) {
+        dateUpdate = formattedNewDate;
+      }
 
-    if (nameUpdate == null && addressUpdate == null && dateUpdate == null) {
-      Navigator.pop(context);
-      return;
-    }
+      // 4. Guard Clause: If nothing actually changed, just close the page
+      if (nameUpdate == null && addressUpdate == null && dateUpdate == null) {
+        if (mounted) Navigator.pop(context);
+        return;
+      }
 
-    try {
-      await AppointmentServices.updateAppointment(
-        id: widget.appointment.id,
-        clientName: nameUpdate,
-        address: addressUpdate,
-        date: dateUpdate,
-      );
-      if (mounted) Navigator.pop(context, true);
-    } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
+      try {
+        // 5. Send only the changed fields to the backend
+        await AppointmentServices.updateAppointment(
+          id: widget.appointment.id,
+          clientName: nameUpdate,
+          address: addressUpdate,
+          date: dateUpdate,
         );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Appointment updated successfully")),
+          );
+          Navigator.pop(context, true); 
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

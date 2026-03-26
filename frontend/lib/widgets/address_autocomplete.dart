@@ -66,14 +66,21 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
   }
 
   void _onAddressChanged(String value) {
-    _selectedAddress = null;
+    setState(() {
+      _selectedAddress = null;
+      _addressSuggestions = [];
+    });
+    
     widget.onSelected('');
 
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      _fetchAddressSuggestions(value);
+      if (value.trim().length >= 3) {
+        _fetchAddressSuggestions(value);
+      }
     });
   }
+
 
   void _selectSuggestion(String suggestion) {
     setState(() {
@@ -109,6 +116,9 @@ class _AddressAutocompleteState extends State<AddressAutocomplete> {
             if (widget.isRequired) {
               if (value == null || value.trim().isEmpty) {
                 return 'Address is required';
+              }
+              if (_selectedAddress == null || _selectedAddress != _addressController.text) {
+                return 'Please select an address from the list';
               }
             }
             return null;
