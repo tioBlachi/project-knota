@@ -12,7 +12,7 @@ from app.config import settings
 from app.db import get_session
 from app.models.user import User
 
-SECRET_KEY = settings.SUPER_SECRET_KEY
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRATION = settings.ACCESS_TOKEN_EXPIRATION_MINS
 

@@ -12,7 +12,7 @@ from app.models.distance import Distance
 from app.config import settings
 
 
-GOOGLE_ROUTES_API_KEY = settings.GOOGLE_ROUTES_API_KEY
+GOOGLE_API_KEY = settings.GOOGLE_API_KEY
 GOOGLE_ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes"
 
 
@@ -27,7 +27,7 @@ def calculate_roundtrip_distance(origin_address: str, destination_address: str) 
     """
     Call the Google Routes API and return the roundtrip distance in miles.
     """
-    if not GOOGLE_ROUTES_API_KEY:
+    if not GOOGLE_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google Routes API key is not configured",
@@ -45,7 +45,7 @@ def calculate_roundtrip_distance(origin_address: str, destination_address: str) 
 
     headers = {
         "Content-Type": "application/json",
-        "X-Goog-Api-Key": GOOGLE_ROUTES_API_KEY,
+        "X-Goog-Api-Key": GOOGLE_API_KEY,
         "X-Goog-FieldMask": "routes.distanceMeters"
     }
 
