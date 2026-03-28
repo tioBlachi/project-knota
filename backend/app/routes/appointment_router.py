@@ -29,7 +29,7 @@ appointment_router = APIRouter(prefix='/appointments', tags=["appointments"], )
 def create_appointment(
     appointment_data: AppointmentCreate,
     current_user: Annotated[User, Depends(get_current_user)],
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ):
     """
     Creates an appointment by taking in an AppointmentCreate object 
@@ -118,7 +118,7 @@ def update_appointment(
     appointment_id: UUID,
     appointment_data: AppointmentUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ):   
     appointment = session.get(Appointment, appointment_id)
 

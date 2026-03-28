@@ -1,9 +1,9 @@
 import uuid as uuid_pkg
 from uuid import UUID
-from datetime import date, time
+from datetime import datetime
 from typing import TYPE_CHECKING, Annotated
 
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Column, DateTime
 from pydantic import StringConstraints
 
 if TYPE_CHECKING:
@@ -12,10 +12,13 @@ if TYPE_CHECKING:
 
 
 class AppointmentBase(SQLModel):
-    client_name: str | None = None
-    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
-    appointment_date: date
-    appointment_time: time
+    client_name: Annotated[str | None, StringConstraints(to_lower=True, strip_whitespace=True, max_length=100)]= None
+    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True, max_length=100)]
+    appointment_date: Annotated[datetime, Field(
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False),
+    )]
 
 
 class Appointment(AppointmentBase, table= True):
@@ -27,10 +30,10 @@ class Appointment(AppointmentBase, table= True):
     """
     __tablename__ = 'appointments'
 
-    id: UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True, index=True)
+    id: Annotated[UUID, Field(default_factory=uuid_pkg.uuid4, primary_key=True, index=True)]
     roundtrip_distance: float | None = None
-    user_id: UUID = Field(foreign_key='users.id', ondelete='CASCADE')
-    distance_id: int | None = Field(default=None, foreign_key='distances.id')
+    user_id: Annotated[UUID, Field(foreign_key='users.id', ondelete='CASCADE')]
+    distance_id: Annotated[int | None, Field(default=None, foreign_key='distances.id')]
     user: 'User' = Relationship(back_populates='appointments')
     distance: 'Distance' = Relationship(back_populates='appointments')
 
@@ -39,9 +42,7 @@ class AppointmentCreate(AppointmentBase):
     """
     Request model used when creating a new appoinment.
     """
-    client_name: str | None
-    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
-    appointment_date: date
+    pass
 
 
 class AppointmentUpdate(SQLModel):
@@ -51,7 +52,7 @@ class AppointmentUpdate(SQLModel):
     """
     client_name: str | None = None
     destination_address: Annotated[str | None, StringConstraints(to_lower=True, strip_whitespace=True)] = None
-    appointment_date: date | None = None
+    appointment_date: datetime | None = None
 
 
 class AppointmentPublic(AppointmentBase):

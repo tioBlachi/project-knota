@@ -1,7 +1,7 @@
 """File containing data and table models related to User
 """
 import uuid as uuid_pkg
-from datetime import date
+from datetime import datetime
 from typing import TYPE_CHECKING, Annotated
 from uuid import UUID
 
@@ -26,9 +26,9 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     __tablename__ = 'users'
 
-    id: UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True, index=True, nullable=False)
+    id: Annotated[UUID, Field(default_factory=uuid_pkg.uuid4, primary_key=True, index=True, nullable=False)]
     hashed_password: str
-    join_date: date = Field(default=date.today())
+    join_date: Annotated[datetime, Field(default=datetime.now())]
     appointments: list['Appointment'] = Relationship(back_populates='user', cascade_delete=True)
 
 
@@ -44,7 +44,7 @@ class UserPublic(UserBase):
     # first_name: str
     # last_name: str
     # company_name: str
-    join_date: date
+    join_date: datetime
 
 
 class UserLogin(SQLModel):

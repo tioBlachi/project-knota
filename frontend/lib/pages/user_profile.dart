@@ -79,7 +79,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 decoration: const InputDecoration(labelText: "Last Name", border: OutlineInputBorder()),
               ),
               const SizedBox(height: 20),
-              // Use your existing AddressAutocomplete (Optional mode)
               AddressAutocomplete(
                 isRequired: false, 
                 onSelected: (addr) => _newAddress = addr,
