@@ -1,5 +1,5 @@
 class AppointmentPublic {
-  final int id;
+  final String id;
   final String clientName;
   final String destinationAddress;
   final double roundtripDistance;

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -54,7 +55,7 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = session.get(User, int(user_id))
+    user = session.get(User, UUID(user_id))
     if not user:
         raise credentials_exception
 

@@ -3,6 +3,7 @@ Router for HTTP requests that are relevant to user CRUD operations
 """
 from datetime import date
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -51,7 +52,7 @@ def create_user(user_in: UserCreate, session: Session = Depends(get_session)):
 
 @user_router.patch('/{user_id}/', response_model=UserPublic)
 def update_user(
-    user_id: int,
+    user_id: UUID,
     user_data: UserUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
@@ -111,7 +112,7 @@ def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 
 
 @user_router.delete('/{user_id}/')
-def delete_user(user_id: int,
+def delete_user(user_id: UUID,
                 current_user: Annotated[User, Depends(get_current_user)],
                 session: Session = Depends(get_session)):
     if current_user.id != user_id:

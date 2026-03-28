@@ -1,4 +1,6 @@
-from datetime import date
+import uuid as uuid_pkg
+from uuid import UUID
+from datetime import date, time
 from typing import TYPE_CHECKING, Annotated
 
 from sqlmodel import SQLModel, Field, Relationship
@@ -13,6 +15,7 @@ class AppointmentBase(SQLModel):
     client_name: str | None = None
     destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
     appointment_date: date
+    appointment_time: time
 
 
 class Appointment(AppointmentBase, table= True):
@@ -24,9 +27,9 @@ class Appointment(AppointmentBase, table= True):
     """
     __tablename__ = 'appointments'
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True, index=True)
     roundtrip_distance: float | None = None
-    user_id: int = Field(foreign_key='users.id', ondelete='CASCADE')
+    user_id: UUID = Field(foreign_key='users.id', ondelete='CASCADE')
     distance_id: int | None = Field(default=None, foreign_key='distances.id')
     user: 'User' = Relationship(back_populates='appointments')
     distance: 'Distance' = Relationship(back_populates='appointments')
@@ -55,7 +58,7 @@ class AppointmentPublic(AppointmentBase):
     """
     Response model returned to the frontend
     """
-    id: int
-    user_id: int
+    id: UUID
+    user_id: UUID
     roundtrip_distance: float | None = None
     distance_id: int | None = None

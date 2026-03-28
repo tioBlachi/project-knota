@@ -1,7 +1,9 @@
 """File containing data and table models related to User
 """
+import uuid as uuid_pkg
 from datetime import date
 from typing import TYPE_CHECKING, Annotated
+from uuid import UUID
 
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import EmailStr, StringConstraints
@@ -24,7 +26,7 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     __tablename__ = 'users'
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True, index=True, nullable=False)
     hashed_password: str
     join_date: date = Field(default=date.today())
     appointments: list['Appointment'] = Relationship(back_populates='user', cascade_delete=True)
@@ -38,7 +40,7 @@ class UserPublic(UserBase):
     """
     The publicly returned response model. Will not return passwords from the backend
     """
-    id: int
+    id: UUID
     # first_name: str
     # last_name: str
     # company_name: str

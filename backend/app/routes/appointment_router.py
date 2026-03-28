@@ -3,6 +3,7 @@ Router for HTTP requests related to appointment CRUD operations.
 """
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 from fastapi.encoders import jsonable_encoder
@@ -90,7 +91,7 @@ def get_user_appointments_report(
 
 @appointment_router.get("/{appointment_id}", response_model=AppointmentPublic)
 def get_appointment(
-    appointment_id: int,
+    appointment_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
 ):    
@@ -114,7 +115,7 @@ def get_appointment(
 
 @appointment_router.patch("/{appointment_id}", response_model=AppointmentPublic)
 def update_appointment(
-    appointment_id: int,
+    appointment_id: UUID,
     appointment_data: AppointmentUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
@@ -135,7 +136,7 @@ def update_appointment(
 
     appointment_data_dump = appointment_data.model_dump(exclude_unset=True)
 
-    if 'destination-address' in appointment_data_dump:
+    if 'destination_address' in appointment_data_dump:
         distance = get_or_create_distance(
             session=session,
             origin_address=current_user.address,
@@ -156,7 +157,7 @@ def update_appointment(
 
 @appointment_router.delete("/{appointment_id}")
 def delete_appointment(
-    appointment_id: int,
+    appointment_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
 ):

@@ -101,7 +101,7 @@ class UserServices {
     }
   }
 
-  static Future<UserPublic> updateUser(int userId, UserUpdate updateData) async {
+  static Future<UserPublic> updateUser(String userId, UserUpdate updateData) async {
     final String? token = await StorageService.getToken();
     final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId/');
 
@@ -130,7 +130,7 @@ class UserServices {
     }
   }
 
-  static Future<void> deleteAccount(int userId) async {
+  static Future<void> deleteAccount(String userId) async {
     final String? token = await StorageService.getToken();
     final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId/');
 

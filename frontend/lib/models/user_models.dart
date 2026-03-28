@@ -78,7 +78,7 @@ class UserUpdate {
 
 
 class UserPublic {
-  final int id;
+  final String id;
   final String firstName;
   final String lastName;
   final String? companyName;
@@ -98,7 +98,7 @@ class UserPublic {
 
   factory UserPublic.fromJson(Map<String, dynamic> json) {
     return UserPublic(
-      id: json['id'] is String ? int.parse(json['id']) : json['id'],
+      id: json['id'].toString(),// is String ? int.parse(json['id']) : json['id'],
       firstName: json['first_name'],
       lastName: json['last_name'],
       companyName: json['company_name'],

@@ -44,7 +44,7 @@ Future<void> createAppointment({
 }
 
 
-Future<void> deleteAppointment(int appointmentId) async {
+Future<void> deleteAppointment(String appointmentId) async {
   final String? token = await StorageService.getToken();
   
   if (token == null) throw Exception('No token found.');
@@ -68,7 +68,7 @@ Future<void> deleteAppointment(int appointmentId) async {
 
 
 Future<void> updateAppointment({
-  required int id,
+  required String id,
   String? clientName,
   String? address,
   String? date,

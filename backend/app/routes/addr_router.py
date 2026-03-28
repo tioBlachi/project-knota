@@ -24,7 +24,7 @@ def autocomplete_addresses(
 
     statement = (
         select(Address.full_address)
-        .where(Address.full_address.startswith(query))
+        .where(Address.full_address.ilike(f"%{query}%"))
         .limit(limit)
     )
 
