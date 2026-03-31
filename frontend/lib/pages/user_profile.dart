@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/user_models.dart';
-import 'package:frontend/services/user_services.dart';
+import 'package:frontend/pages/edit_profile.dart';
 import 'package:frontend/pages/login_page.dart';
-import 'package:frontend/widgets/address_autocomplete.dart';
+import 'package:frontend/services/user_services.dart';
+import 'package:intl/intl.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -12,18 +13,9 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
-  final _formKey = GlobalKey<FormState>();
-  
-  // Controllers
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _companyController;
-  late TextEditingController _emailController;
-  final TextEditingController _passwordController = TextEditingController();
-
   UserPublic? _currentUser;
-  String? _newAddress;
   bool _isLoading = true;
+  bool _didUpdate = false;
 
   @override
   void initState() {
@@ -34,177 +26,248 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Future<void> _fetchProfile() async {
     try {
       final user = await UserServices.getUserProfile();
+      if (!mounted) return;
+
       setState(() {
         _currentUser = user;
-        _firstNameController = TextEditingController(text: user.firstName);
-        _lastNameController = TextEditingController(text: user.lastName);
-        _companyController = TextEditingController(text: user.companyName);
-        _emailController = TextEditingController(text: user.email);
         _isLoading = false;
       });
     } catch (e) {
-      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
+      Navigator.pop(context, _didUpdate);
     }
   }
 
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _companyController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  Future<void> _openEditProfile() async {
+    final user = _currentUser;
+    if (user == null) return;
 
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("Account Settings")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(labelText: "First Name", border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(labelText: "Last Name", border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 20),
-              AddressAutocomplete(
-                isRequired: false, 
-                onSelected: (addr) => _newAddress = addr,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _companyController,
-                decoration: const InputDecoration(labelText: "Company Name (Optional)", border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "New Password (Leave blank to keep current)",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _updateProfile,
-                  child: const Text("Save Changes"),
-                ),
-              ),
-              const Divider(height: 60),
-              TextButton(
-                onPressed: _confirmDelete,
-                child: const Text("Delete Account", style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
-        ),
+    final bool? updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfilePage(user: user),
       ),
     );
-  }
 
-  Future<void> _updateProfile() async {
-    if (_formKey.currentState!.validate() && _currentUser != null) {
-      
-      String? addressUpdate;
-      if (_newAddress != null && 
-          _newAddress!.trim().isNotEmpty && 
-          _newAddress!.trim() != _currentUser!.address) {
-        addressUpdate = _newAddress!.trim();
-      } else {
-        addressUpdate = null; 
-      }
-
-      final update = UserUpdate(
-        firstName: _firstNameController.text.trim() != _currentUser!.firstName ? _firstNameController.text.trim() : null,
-        lastName: _lastNameController.text.trim() != _currentUser!.lastName ? _lastNameController.text.trim() : null,
-        companyName: _companyController.text.trim() != _currentUser!.companyName ? _companyController.text.trim() : null,
-        address: addressUpdate, // Use our guarded variable
-        email: _emailController.text.trim().toLowerCase() != _currentUser!.email ? _emailController.text.trim() : null,
-        password: _passwordController.text.isNotEmpty ? _passwordController.text : null,
-      );
-
-      // 2. Guard: Don't hit the API if nothing valid changed
-      if (update.firstName == null && 
-          update.lastName == null && 
-          update.companyName == null && 
-          update.address == null && 
-          update.email == null && 
-          update.password == null) {
-        Navigator.pop(context);
-        return;
-      }
-
-      try {
-        await UserServices.updateUser(_currentUser!.id, update);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profile updated!")));
-          Navigator.pop(context, true); 
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: Colors.red)
-          );
-        }
-      }
+    if (updated == true) {
+      _didUpdate = true;
+      await _fetchProfile();
     }
   }
 
-
-
   Future<void> _confirmDelete() async {
-    final bool? confirm = await showDialog(
+    final user = _currentUser;
+    if (user == null) return;
+
+    final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Delete Account?"),
-        content: const Text("All your appointments and mileage data will be permanently lost. This cannot be undone."),
+        title: const Text('Delete Account?'),
+        content: const Text(
+          'All your appointments and mileage data will be permanently lost. This cannot be undone.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
           TextButton(
-            onPressed: () => Navigator.pop(context, true), 
-            child: const Text("DELETE", style: TextStyle(color: Colors.red)),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'DELETE',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
+
+    if (confirm != true) return;
+
     try {
-    if (confirm == true) {
-      await UserServices.deleteAccount(_currentUser!.id);
+      await UserServices.deleteAccount(user.id);
       if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(
-        context, 
-        MaterialPageRoute(builder: (context) => const LoginPage()), 
-        (route) => false
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
       );
-    } } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Delete failed: $e'), backgroundColor: Colors.red,
-          ),
-        );
-      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Delete failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
+  }
+
+  void _popWithResult() {
+    Navigator.pop(context, _didUpdate);
+  }
+
+  String _displayValue(String? value) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? 'Not provided' : trimmed;
+  }
+
+  String _formatJoinDate(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      return value;
+    }
+    return DateFormat('MMMM d, y').format(parsed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Profile'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _popWithResult,
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _currentUser == null
+          ? const Center(child: Text('Unable to load profile'))
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                _ProfileSection(
+                  title: 'Business',
+                  children: [
+                    _ProfileRow(
+                      label: 'Display Name',
+                      value: _currentUser!.displayName,
+                    ),
+                    _ProfileRow(
+                      label: 'Company Name',
+                      value: _displayValue(_currentUser!.companyName),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _ProfileSection(
+                  title: 'Personal',
+                  children: [
+                    _ProfileRow(
+                      label: 'First Name',
+                      value: _currentUser!.firstName,
+                    ),
+                    _ProfileRow(
+                      label: 'Last Name',
+                      value: _currentUser!.lastName,
+                    ),
+                    _ProfileRow(
+                      label: 'Email',
+                      value: _currentUser!.email,
+                    ),
+                    _ProfileRow(
+                      label: 'Address',
+                      value: _currentUser!.address,
+                    ),
+                    _ProfileRow(
+                      label: 'Member Since',
+                      value: _formatJoinDate(_currentUser!.joinDate),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: _openEditProfile,
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Edit Profile'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Eventually figure out how to email validate a password'),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.lock_outline),
+                  label: const Text('Change Password'),
+                ),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: _confirmDelete,
+                  child: const Text(
+                    'Delete Account',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _ProfileSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _ProfileSection({
+    required this.title,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ProfileRow({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    );
   }
 }
