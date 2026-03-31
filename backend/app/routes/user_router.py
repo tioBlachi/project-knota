@@ -13,6 +13,7 @@ from sqlmodel import Session, select
 from app.db import get_session, engine
 from app.models.user import User, UserCreate, UserPublic, UserUpdate
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
+from app.services.login_rate_limiter import login_limiter
 
 user_router = APIRouter(prefix="/user", tags=["users"])
 
@@ -96,13 +97,18 @@ def update_user(
 @user_router.post('/login')
 def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
                session: Session = Depends(get_session)):
+    identifier = form_data.username.strip().lower()
+    login_limiter.raise_if_blocked(identifier)
+
     user = session.exec(
-        select(User).where(User.email == form_data.username)
+        select(User).where(User.email == identifier)
     ).first()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
+        login_limiter.record_failure(identifier)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials')
-    
+
+    login_limiter.clear(identifier)
     access_token = create_access_token(data={'sub': str(user.id)})
     
     return {

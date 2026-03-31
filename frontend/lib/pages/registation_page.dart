@@ -228,6 +228,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                       FilledButton(
                         onPressed: () async {
+                          final scaffoldMessenger = ScaffoldMessenger.of(
+                            context,
+                          );
+                          final navigator = Navigator.of(context);
                           final String? companyName =
                               _companyNameController.text.trim().isEmpty
                               ? null
@@ -239,7 +243,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             final selectedAddress = _selectedAddress?.trim();
                             if (selectedAddress == null ||
                                 selectedAddress.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              scaffoldMessenger.showSnackBar(
                                 const SnackBar(
                                   content: Text('Please select an address'),
                                   backgroundColor: Colors.red,
@@ -270,12 +274,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               await UserServices.createUser(user);
                               await StorageService.deleteToken();
 
-                              ScaffoldMessenger.of(
-                                context,
-                              ).hideCurrentSnackBar();
+                              scaffoldMessenger.hideCurrentSnackBar();
 
                               final snackBarController =
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  scaffoldMessenger.showSnackBar(
                                     SnackBar(
                                       backgroundColor: Colors.green.shade100,
                                       behavior: SnackBarBehavior.floating,
@@ -304,13 +306,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                   );
                               await snackBarController.closed;
 
-                              Navigator.pop(context);
+                              navigator.pop();
                               
                             } catch (e) {
-                              ScaffoldMessenger.of(
-                                context,
-                              ).hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              scaffoldMessenger.hideCurrentSnackBar();
+                              scaffoldMessenger.showSnackBar(
                                 SnackBar(
                                   backgroundColor: Colors.red.shade100,
                                   behavior: SnackBarBehavior.floating,

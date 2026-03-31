@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/services/appointment_services.dart' as AppointmentServices;
+import 'package:frontend/services/appointment_services.dart' as appointment_services;
 import 'package:intl/intl.dart';
 import 'package:frontend/models/appointment_models.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
@@ -158,7 +158,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
 
       try {
         // 5. Send only the changed fields to the backend
-        await AppointmentServices.updateAppointment(
+        await appointment_services.updateAppointment(
           id: widget.appointment.id,
           clientName: nameUpdate,
           address: addressUpdate,

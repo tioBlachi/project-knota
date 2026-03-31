@@ -8,6 +8,9 @@ class Setting(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRATION_MINS: int = 60
     SQL_ECHO: bool = False
+    LOGIN_MAX_ATTEMPTS: int = 5
+    LOGIN_WINDOW_SECONDS: int = 300
+    LOGIN_LOCKOUT_SECONDS: int = 900
 
     model_config = SettingsConfigDict(
         env_file="../.env",

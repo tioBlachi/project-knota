@@ -3,7 +3,7 @@ import 'package:frontend/pages/add_appointment.dart';
 import 'package:frontend/pages/update_appointment.dart';
 import 'package:frontend/pages/user_profile.dart';
 import 'package:frontend/services/appointment_services.dart'
-    as AppointmentServices;
+    as appointment_services;
 import 'package:table_calendar/table_calendar.dart';
 import 'package:frontend/models/appointment_models.dart';
 import 'package:frontend/pages/login_page.dart';
@@ -72,6 +72,7 @@ class _HomePageState extends State<HomePage> {
     BuildContext context,
     AppointmentPublic appt,
   ) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -100,11 +101,11 @@ class _HomePageState extends State<HomePage> {
 
     if (confirm == true) {
       try {
-        await AppointmentServices.deleteAppointment(appt.id);
+        await appointment_services.deleteAppointment(appt.id);
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           const SnackBar(
             content: Text('Appointment deleted'),
             duration: Duration(seconds: 2),
@@ -113,7 +114,7 @@ class _HomePageState extends State<HomePage> {
         await _loadProfile();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
           );
         }
@@ -148,9 +149,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        actions: [
-          
-        ]
+        actions: const [],
       ),
       endDrawer: Drawer(
         width: MediaQuery.of(context).size.width * 0.75 > 300
@@ -221,13 +220,14 @@ class _HomePageState extends State<HomePage> {
               subtitle: Text('Current Year: $_selectedYear'),
               onTap: () async {
                 Navigator.pop(context); // Close the drawer first
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 try {
-                  await AppointmentServices.generateAndShareReport(
+                  await appointment_services.generateAndShareReport(
                     _selectedYear,
                   );
                 } catch (e) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    scaffoldMessenger.showSnackBar(
                       SnackBar(
                         content: Text(
                           e.toString().replaceFirst('Exception: ', ''),

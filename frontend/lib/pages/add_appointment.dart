@@ -57,6 +57,7 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
       );
 
       if (pickedDate != null) {
+        if (!mounted) return;
         pickedTime = await showTimePicker(
           context: context,
           initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
@@ -137,8 +138,9 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
           address: _selectedAddress!,
           date: _dateController.text,
         );
-        if (mounted)
+        if (mounted) {
           Navigator.pop(context, true); // Return 'true' to trigger refresh
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
