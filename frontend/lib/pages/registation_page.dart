@@ -236,6 +236,18 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                     .toUpperCase();
 
                           if (_formGlobalKey.currentState!.validate()) {
+                            final selectedAddress = _selectedAddress?.trim();
+                            if (selectedAddress == null ||
+                                selectedAddress.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please select an address'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
                             final String userFirstName = _firstNameController
                                 .text
                                 .trim();
@@ -250,7 +262,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               firstName: userFirstName.toUpperCase(),
                               lastName: userLastName.toUpperCase(),
                               companyName: companyName,
-                              address: _selectedAddress.toString(),
+                              address: selectedAddress,
                               email: userEmail.toUpperCase(),
                               password: userPassword,
                             );

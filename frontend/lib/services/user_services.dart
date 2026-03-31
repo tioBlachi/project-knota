@@ -80,7 +80,7 @@ class UserServices {
       throw Exception('No token found. Please log in again.');
     }
 
-    final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/?year=$year');
 
     final response = await http.get(
       uri,

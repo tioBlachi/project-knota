@@ -13,7 +13,7 @@ addr_router = APIRouter(
 
 @addr_router.get('/autocomplete', response_model=list)
 def autocomplete_addresses(
-    q: Annotated[str, Query(min_length=1)],
+    q: Annotated[str, Query(min_length=3)],
     session: Annotated[Session, Depends(get_session)],
     limit: Annotated[int, Query(le=20)] = 10,
 ):

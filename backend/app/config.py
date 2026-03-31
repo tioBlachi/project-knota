@@ -7,6 +7,7 @@ class Setting(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRATION_MINS: int = 60
+    SQL_ECHO: bool = False
 
     model_config = SettingsConfigDict(
         env_file="../.env",

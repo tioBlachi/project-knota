@@ -28,18 +28,17 @@ Future<void> createAppointment({
     }),
   );
 
-  if (response.statusCode != 201) {
-    if (response.body.isEmpty) {
-      debugPrint('Success ,but received an empty body');
-      return;
+  if (response.statusCode == 201) {
+    if (response.body.isNotEmpty) {
+      final data = jsonDecode(response.body);
+      debugPrint('Created: $data');
     }
-    final data = jsonDecode(response.body);
-    debugPrint('Created: $data');
+    return;
   } else {
     final errorMessage = response.body.isNotEmpty ?
       jsonDecode(response.body)['detail'] :
       'Failed to create appointment';
-      throw errorMessage;
+      throw Exception(errorMessage);
   }
 }
 

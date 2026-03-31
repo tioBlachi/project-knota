@@ -58,13 +58,21 @@ def create_appointment(
 @appointment_router.get('/', response_model=list[AppointmentPublic])
 def get_appointment_list(
     current_user: Annotated[User, Depends(get_current_user)],
+    year: int | None = None,
     session: Session = Depends(get_session),
 ):
-    appointments = session.exec(
+    statement = (
         select(Appointment)
         .where(Appointment.user_id == current_user.id)
         .order_by(Appointment.appointment_date)
-    ).all()
+    )
+
+    if year is not None:
+        statement = statement.where(
+            extract('year', Appointment.appointment_date) == year
+        )
+
+    appointments = session.exec(statement).all()
 
     return appointments
 

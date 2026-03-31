@@ -9,7 +9,7 @@ DATABASE_URL: str = settings.DATABASE_URL
 if not DATABASE_URL:
     raise ValueError('DATABASE_URL in not set')
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=settings.SQL_ECHO)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
