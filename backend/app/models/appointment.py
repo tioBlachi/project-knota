@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class AppointmentBase(SQLModel):
-    client_name: Annotated[str | None, StringConstraints(to_lower=True, strip_whitespace=True, max_length=100)]= None
+    client_name: Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=100)] = None
     destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True, max_length=100)]
     appointment_date: Annotated[datetime, Field(
         sa_column=Column(
@@ -50,7 +50,7 @@ class AppointmentUpdate(SQLModel):
     Request model used when partially updating an appointment.
     All fields are optional
     """
-    client_name: str | None = None
+    client_name: Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=100)] = None
     destination_address: Annotated[str | None, StringConstraints(to_lower=True, strip_whitespace=True)] = None
     appointment_date: datetime | None = None
 

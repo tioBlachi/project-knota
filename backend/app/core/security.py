@@ -19,7 +19,7 @@ ACCESS_TOKEN_EXPIRATION = settings.ACCESS_TOKEN_EXPIRATION_MINS
 
 # Password hashing
 ph = PasswordHasher()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(password: str) -> str:

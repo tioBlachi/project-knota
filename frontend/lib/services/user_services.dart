@@ -7,7 +7,7 @@ import 'package:frontend/services/storage_service.dart';
 
 class UserServices {
   static Future<UserPublic> createUser(UserCreate user) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/user/');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/users');
 
     final response = await http.post(
       uri,
@@ -26,7 +26,7 @@ class UserServices {
   }
 
   static Future<String> login(String email, String password) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}/user/login');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/login');
 
     final response = await http.post(
       uri,
@@ -53,7 +53,7 @@ class UserServices {
       throw Exception('No token found. Please log in again.');
     }
 
-    final uri = Uri.parse('${ApiConfig.baseUrl}/user/me');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/users/me');
 
     final response = await http.get(
       uri,
@@ -80,7 +80,7 @@ class UserServices {
       throw Exception('No token found. Please log in again.');
     }
 
-    final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/?year=$year');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/appointments?year=$year');
 
     final response = await http.get(
       uri,
@@ -103,7 +103,7 @@ class UserServices {
 
   static Future<UserPublic> updateUser(String userId, UserUpdate updateData) async {
     final String? token = await StorageService.getToken();
-    final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId/');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/users/$userId');
 
     final Map<String, dynamic> body = updateData.toJson();
     // Remove nulls so we don't overwrite existing data with nulls
@@ -132,7 +132,7 @@ class UserServices {
 
   static Future<void> deleteAccount(String userId) async {
     final String? token = await StorageService.getToken();
-    final uri = Uri.parse('${ApiConfig.baseUrl}/user/$userId/');
+    final uri = Uri.parse('${ApiConfig.baseUrl}/users/$userId');
 
     final response = await http.delete(
       uri,
@@ -141,7 +141,7 @@ class UserServices {
       },
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode != 204) {
       throw Exception('Failed to delete account');
     } else {
       await StorageService.deleteToken();

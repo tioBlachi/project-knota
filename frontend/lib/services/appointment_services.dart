@@ -13,7 +13,7 @@ Future<void> createAppointment({
   required String date,
 }) async {
   final token = await StorageService.getToken();
-  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/');
+  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments');
 
   final response = await http.post(
     uri,
@@ -59,8 +59,8 @@ Future<void> deleteAppointment(String appointmentId) async {
     },
   );
 
-  if (response.statusCode != 200) {
-    final errorData = jsonDecode(response.body);
+  if (response.statusCode != 204) {
+    final errorData = response.body.isNotEmpty ? jsonDecode(response.body) : {};
     throw Exception(errorData['detail'] ?? 'Failed to delete appointment');
   }
 }
@@ -98,7 +98,7 @@ Future<void> updateAppointment({
 
 Future<void> generateAndShareReport(int year) async {
   final token = await StorageService.getToken();
-  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/generate/reports/?year=$year');
+  final uri = Uri.parse('${ApiConfig.baseUrl}/reports/mileage?year=$year');
 
   final response = await http.get(
     uri,
