@@ -25,14 +25,11 @@ services:
     container_name: knota-api
     restart: always
     ports:
-      - "80:8000"
+      - "9000:8080"
     environment:
-      DATABASE_URL: postgresql+psycopg://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/knota_db
+      DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-    depends_on:
-      db:
-        condition: service_healthy
 
 volumes:
   postgres_data:

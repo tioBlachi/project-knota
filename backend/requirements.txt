@@ -7,5 +7,5 @@ pwdlib[argon2]
 psycopg[binary]
 fpdf2
 python-jose[cryptography]
-gunicorn
 uvicorn
+mangum
