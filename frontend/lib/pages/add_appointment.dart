@@ -73,7 +73,7 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
               pickedTime.minute,
             );
             _dateController.text = DateFormat(
-              'yyyy-MM-dd HH:mm',
+              'yyyy-MM-dd h:mm a',
             ).format(_selectedDateTime);
           });
         }
@@ -136,7 +136,7 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
         await createAppointment(
           clientName: _nameController.text,
           address: _selectedAddress!,
-          date: _dateController.text,
+          date: _selectedDateTime.toIso8601String(),//_dateController.text,
         );
         if (mounted) {
           Navigator.pop(context, true); // Return 'true' to trigger refresh

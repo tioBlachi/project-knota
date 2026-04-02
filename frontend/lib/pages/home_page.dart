@@ -9,6 +9,7 @@ import 'package:frontend/models/appointment_models.dart';
 import 'package:frontend/pages/login_page.dart';
 import 'package:frontend/services/storage_service.dart';
 import 'package:frontend/services/user_services.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,6 +37,10 @@ class _HomePageState extends State<HomePage> {
     return DateTime(date.year, date.month, date.day);
   }
 
+  String _formatAppointmentTime(DateTime dateTime) {
+    return DateFormat('h:mm a').format(dateTime);
+  }
+
   Future<void> _loadProfile() async {
     try {
       final user = await UserServices.getUserProfile();
@@ -48,6 +53,12 @@ class _HomePageState extends State<HomePage> {
         final date = _normalizeDate(appt.appointmentDate);
         if (grouped[date] == null) grouped[date] = [];
         grouped[date]!.add(appt);
+      }
+
+      for (final appointments in grouped.values) {
+        appointments.sort(
+          (a, b) => a.appointmentDate.compareTo(b.appointmentDate),
+        );
       }
 
       if (!mounted) return;
@@ -360,7 +371,9 @@ class _HomePageState extends State<HomePage> {
           child: ListTile(
             leading: const Icon(Icons.location_on, color: Colors.deepPurple),
             title: Text(appt.clientName),
-            subtitle: Text(appt.destinationAddress),
+            subtitle: Text(
+              '${_formatAppointmentTime(appt.appointmentDate)}\n${appt.destinationAddress}',
+            ),
             trailing: Text("${appt.roundtripDistance.toStringAsFixed(1)} mi"),
             onLongPress: () => _confirmDelete(context, appt),
             onTap: () async {
