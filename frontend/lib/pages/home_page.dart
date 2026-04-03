@@ -307,7 +307,7 @@ class _HomePageState extends State<HomePage> {
               });
             },
             eventLoader: _getEventsForDay,
-            calendarStyle: const CalendarStyle(
+            calendarStyle: CalendarStyle(
               markerDecoration: BoxDecoration(
                 color: Colors.amber,
                 shape: BoxShape.circle,
@@ -317,8 +317,12 @@ class _HomePageState extends State<HomePage> {
                 shape: BoxShape.circle,
               ),
               selectedDecoration: BoxDecoration(
-                color: Colors.deepPurple,
+                color: const Color(0xFFDCCFFB),
                 shape: BoxShape.circle,
+              ),
+              selectedTextStyle: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

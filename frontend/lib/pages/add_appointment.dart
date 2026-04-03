@@ -26,7 +26,9 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
   void initState() {
     super.initState();
     _selectedDateTime = widget.initialDate ?? DateTime.now();
-    _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDateTime);
+    _dateController.text = DateFormat(
+      'yyyy-MM-dd h:mm a',
+    ).format(_selectedDateTime);
   }
 
   @override
@@ -42,11 +44,20 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       // iOS
-      await showCupertinoModalPopup(
+      final selectedDateTime = await showCupertinoModalPopup<DateTime>(
         context: context,
         builder: (context) =>
             DatePickerModalIOS(initialDateTime: _selectedDateTime),
       );
+
+      if (selectedDateTime != null) {
+        setState(() {
+          _selectedDateTime = selectedDateTime;
+          _dateController.text = DateFormat(
+            'yyyy-MM-dd h:mm a',
+          ).format(_selectedDateTime);
+        });
+      }
     } else {
       // Android, doesn't need its own custom class
       pickedDate = await showDatePicker(
