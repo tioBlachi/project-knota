@@ -263,11 +263,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                 _passwordController.text;
 
                             UserCreate user = UserCreate(
-                              firstName: userFirstName.toUpperCase(),
-                              lastName: userLastName.toUpperCase(),
+                              firstName: userFirstName,
+                              lastName: userLastName,
                               companyName: companyName,
                               address: selectedAddress,
-                              email: userEmail.toUpperCase(),
+                              email: userEmail,
                               password: userPassword,
                             );
                             try {
