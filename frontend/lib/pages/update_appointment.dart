@@ -135,7 +135,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
               ),
               const SizedBox(height: 20),
 
-              const Text("Appointment Date", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Appointment Date & Time", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _dateController,
