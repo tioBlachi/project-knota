@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
 from argon2 import PasswordHasher
+from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from jose import jwt, JWTError
 
 from app.config import settings
@@ -27,7 +28,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return ph.verify(hashed_password, password)
+    try:
+        return ph.verify(hashed_password, password)
+    except (VerifyMismatchError, InvalidHashError):
+        return False
 
 # jwt token
 

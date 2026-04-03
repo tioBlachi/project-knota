@@ -8,3 +8,4 @@ psycopg[binary]
 fpdf2
 python-jose[cryptography]
 mangum
+pytest
