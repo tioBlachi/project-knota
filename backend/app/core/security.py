@@ -1,24 +1,26 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
 from argon2 import PasswordHasher
+from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from jose import jwt, JWTError
 
 from app.config import settings
 from app.db import get_session
 from app.models.user import User
 
-SECRET_KEY = settings.SUPER_SECRET_KEY
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRATION = settings.ACCESS_TOKEN_EXPIRATION_MINS
 
 # Password hashing
 ph = PasswordHasher()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(password: str) -> str:
@@ -26,7 +28,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return ph.verify(hashed_password, password)
+    try:
+        return ph.verify(hashed_password, password)
+    except (VerifyMismatchError, InvalidHashError):
+        return False
 
 # jwt token
 
@@ -54,7 +59,7 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = session.get(User, int(user_id))
+    user = session.get(User, UUID(user_id))
     if not user:
         raise credentials_exception
 

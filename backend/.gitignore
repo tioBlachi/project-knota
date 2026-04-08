@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 
 # =========================
 # Virtual environments
@@ -47,3 +48,5 @@ alembic/versions/*.pyc
 # =========================
 .vscode/
 .idea/
+
+.git

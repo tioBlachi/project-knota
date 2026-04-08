@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/services/appointment_services.dart' as AppointmentServices;
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:frontend/services/appointment_services.dart' as appointment_services;
 import 'package:intl/intl.dart';
 import 'package:frontend/models/appointment_models.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
+import 'package:frontend/widgets/ios_datetime.dart';
 
 class UpdateAppointmentPage extends StatefulWidget {
   final AppointmentPublic appointment;
@@ -19,18 +22,16 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
   late TextEditingController _dateController;
   
   String? _updatedAddress;
-  late DateTime _selectedDate;
+  late DateTime _selectedDateTime;
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill fields with existing data from the model
     _nameController = TextEditingController(text: widget.appointment.clientName);
-    _selectedDate = widget.appointment.appointmentDate;
+    _selectedDateTime = widget.appointment.appointmentDate;
     _dateController = TextEditingController(
-      text: DateFormat('yyyy-MM-dd').format(_selectedDate),
+      text: DateFormat('yyyy-MM-dd h:mm a').format(_selectedDateTime),
     );
-    // Initialize with current address in case they don't change it
     _updatedAddress = widget.appointment.destinationAddress;
   }
 
@@ -39,6 +40,58 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
     _nameController.dispose();
     _dateController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDateTime() async {
+    DateTime? pickedDate;
+    TimeOfDay? pickedTime;
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final selectedDateTime = await showCupertinoModalPopup<DateTime>(
+        context: context,
+        builder: (context) =>
+            DatePickerModalIOS(initialDateTime: _selectedDateTime),
+      );
+
+      if (selectedDateTime != null) {
+        setState(() {
+          _selectedDateTime = selectedDateTime;
+          _dateController.text = DateFormat(
+            'yyyy-MM-dd h:mm a',
+          ).format(_selectedDateTime);
+        });
+      }
+    } else {
+      pickedDate = await showDatePicker(
+        context: context,
+        initialDate: _selectedDateTime,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2030),
+      );
+
+      if (pickedDate != null) {
+        if (!mounted) return;
+        pickedTime = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+        );
+
+        if (pickedTime != null) {
+          setState(() {
+            _selectedDateTime = DateTime(
+              pickedDate!.year,
+              pickedDate.month,
+              pickedDate.day,
+              pickedTime!.hour,
+              pickedTime.minute,
+            );
+            _dateController.text = DateFormat(
+              'yyyy-MM-dd h:mm a',
+            ).format(_selectedDateTime);
+          });
+        }
+      }
+    }
   }
 
   @override
@@ -82,7 +135,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
               ),
               const SizedBox(height: 20),
 
-              const Text("Appointment Date", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Appointment Date & Time", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _dateController,
@@ -91,20 +144,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
                   border: OutlineInputBorder(),
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      _selectedDate = picked;
-                      _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
-                    });
-                  }
-                },
+                onTap: _pickDateTime,
               ),
               const SizedBox(height: 40),
               FilledButton(
@@ -143,8 +183,9 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
       }
 
       // 3. Date Logic
-      final String formattedNewDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      final String formattedOldDate = DateFormat('yyyy-MM-dd').format(widget.appointment.appointmentDate);
+      final String formattedNewDate = _selectedDateTime.toIso8601String();
+      final String formattedOldDate = widget.appointment.appointmentDate
+          .toIso8601String();
       
       if (formattedNewDate != formattedOldDate) {
         dateUpdate = formattedNewDate;
@@ -158,7 +199,7 @@ class _UpdateAppointmentPageState extends State<UpdateAppointmentPage> {
 
       try {
         // 5. Send only the changed fields to the backend
-        await AppointmentServices.updateAppointment(
+        await appointment_services.updateAppointment(
           id: widget.appointment.id,
           clientName: nameUpdate,
           address: addressUpdate,

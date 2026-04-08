@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/appointment_services.dart';
+import 'package:frontend/widgets/ios_datetime.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/widgets/address_autocomplete.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 
 class AddAppointmentPage extends StatefulWidget {
   final DateTime? initialDate;
@@ -14,16 +17,18 @@ class AddAppointmentPage extends StatefulWidget {
 class _AddAppointmentPageState extends State<AddAppointmentPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController(); 
-  
+  final TextEditingController _dateController = TextEditingController();
+
   String? _selectedAddress;
-  late DateTime _selectedDate;
+  late DateTime _selectedDateTime;
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.initialDate ?? DateTime.now();
-    _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    _selectedDateTime = widget.initialDate ?? DateTime.now();
+    _dateController.text = DateFormat(
+      'yyyy-MM-dd h:mm a',
+    ).format(_selectedDateTime);
   }
 
   @override
@@ -33,18 +38,57 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
+  Future<void> _pickDateTime() async {
+    DateTime? pickedDate;
+    TimeOfDay? pickedTime;
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      // iOS
+      final selectedDateTime = await showCupertinoModalPopup<DateTime>(
+        context: context,
+        builder: (context) =>
+            DatePickerModalIOS(initialDateTime: _selectedDateTime),
+      );
+
+      if (selectedDateTime != null) {
+        setState(() {
+          _selectedDateTime = selectedDateTime;
+          _dateController.text = DateFormat(
+            'yyyy-MM-dd h:mm a',
+          ).format(_selectedDateTime);
+        });
+      }
+    } else {
+      // Android, doesn't need its own custom class
+      pickedDate = await showDatePicker(
+        context: context,
+        initialDate: _selectedDateTime,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2030),
+      );
+
+      if (pickedDate != null) {
+        if (!mounted) return;
+        pickedTime = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+        );
+
+        if (pickedTime != null) {
+          setState(() {
+            _selectedDateTime = DateTime(
+              pickedDate!.year,
+              pickedDate.month,
+              pickedDate.day,
+              pickedTime!.hour,
+              pickedTime.minute,
+            );
+            _dateController.text = DateFormat(
+              'yyyy-MM-dd h:mm a',
+            ).format(_selectedDateTime);
+          });
+        }
+      }
     }
   }
 
@@ -60,8 +104,12 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: "Client Name", border: OutlineInputBorder()),
-                validator: (value) => value == null || value.isEmpty ? "Required" : null,
+                decoration: const InputDecoration(
+                  labelText: "Client Name",
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 20),
               AddressAutocomplete(
@@ -72,12 +120,14 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
                 controller: _dateController,
                 readOnly: true,
                 decoration: const InputDecoration(
-                  labelText: "Date",
+                  labelText: "Appointment Date & Time",
                   border: OutlineInputBorder(),
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
-                onTap: () => _selectDate(context),
-                validator: (value) => value == null || value.isEmpty ? "Please select a date" : null,
+                onTap: () => _pickDateTime(),
+                validator: (value) => value == null || value.isEmpty
+                    ? "Please select a date"
+                    : null,
               ),
               const SizedBox(height: 30),
               FilledButton(
@@ -97,9 +147,11 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
         await createAppointment(
           clientName: _nameController.text,
           address: _selectedAddress!,
-          date: _dateController.text,
+          date: _selectedDateTime.toIso8601String(),//_dateController.text,
         );
-        if (mounted) Navigator.pop(context, true); // Return 'true' to trigger refresh
+        if (mounted) {
+          Navigator.pop(context, true); // Return 'true' to trigger refresh
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

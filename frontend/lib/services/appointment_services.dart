@@ -13,7 +13,7 @@ Future<void> createAppointment({
   required String date,
 }) async {
   final token = await StorageService.getToken();
-  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/');
+  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments');
 
   final response = await http.post(
     uri,
@@ -28,23 +28,22 @@ Future<void> createAppointment({
     }),
   );
 
-  if (response.statusCode != 201) {
-    if (response.body.isEmpty) {
-      debugPrint('Success ,but received an empty body');
-      return;
+  if (response.statusCode == 201) {
+    if (response.body.isNotEmpty) {
+      final data = jsonDecode(response.body);
+      debugPrint('Created: $data');
     }
-    final data = jsonDecode(response.body);
-    debugPrint('Created: $data');
+    return;
   } else {
     final errorMessage = response.body.isNotEmpty ?
       jsonDecode(response.body)['detail'] :
       'Failed to create appointment';
-      throw errorMessage;
+      throw Exception(errorMessage);
   }
 }
 
 
-Future<void> deleteAppointment(int appointmentId) async {
+Future<void> deleteAppointment(String appointmentId) async {
   final String? token = await StorageService.getToken();
   
   if (token == null) throw Exception('No token found.');
@@ -60,15 +59,15 @@ Future<void> deleteAppointment(int appointmentId) async {
     },
   );
 
-  if (response.statusCode != 200) {
-    final errorData = jsonDecode(response.body);
+  if (response.statusCode != 204) {
+    final errorData = response.body.isNotEmpty ? jsonDecode(response.body) : {};
     throw Exception(errorData['detail'] ?? 'Failed to delete appointment');
   }
 }
 
 
 Future<void> updateAppointment({
-  required int id,
+  required String id,
   String? clientName,
   String? address,
   String? date,
@@ -99,7 +98,7 @@ Future<void> updateAppointment({
 
 Future<void> generateAndShareReport(int year) async {
   final token = await StorageService.getToken();
-  final uri = Uri.parse('${ApiConfig.baseUrl}/appointments/generate/reports/?year=$year');
+  final uri = Uri.parse('${ApiConfig.baseUrl}/reports/mileage?year=$year');
 
   final response = await http.get(
     uri,

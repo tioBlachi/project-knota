@@ -228,6 +228,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                       FilledButton(
                         onPressed: () async {
+                          final scaffoldMessenger = ScaffoldMessenger.of(
+                            context,
+                          );
+                          final navigator = Navigator.of(context);
                           final String? companyName =
                               _companyNameController.text.trim().isEmpty
                               ? null
@@ -236,6 +240,18 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                     .toUpperCase();
 
                           if (_formGlobalKey.currentState!.validate()) {
+                            final selectedAddress = _selectedAddress?.trim();
+                            if (selectedAddress == null ||
+                                selectedAddress.isEmpty) {
+                              scaffoldMessenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please select an address'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+
                             final String userFirstName = _firstNameController
                                 .text
                                 .trim();
@@ -247,23 +263,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                 _passwordController.text;
 
                             UserCreate user = UserCreate(
-                              firstName: userFirstName.toUpperCase(),
-                              lastName: userLastName.toUpperCase(),
+                              firstName: userFirstName,
+                              lastName: userLastName,
                               companyName: companyName,
-                              address: _selectedAddress.toString(),
-                              email: userEmail.toUpperCase(),
+                              address: selectedAddress,
+                              email: userEmail,
                               password: userPassword,
                             );
                             try {
                               await UserServices.createUser(user);
                               await StorageService.deleteToken();
 
-                              ScaffoldMessenger.of(
-                                context,
-                              ).hideCurrentSnackBar();
+                              scaffoldMessenger.hideCurrentSnackBar();
 
                               final snackBarController =
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  scaffoldMessenger.showSnackBar(
                                     SnackBar(
                                       backgroundColor: Colors.green.shade100,
                                       behavior: SnackBarBehavior.floating,
@@ -292,13 +306,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                   );
                               await snackBarController.closed;
 
-                              Navigator.pop(context);
+                              navigator.pop();
                               
                             } catch (e) {
-                              ScaffoldMessenger.of(
-                                context,
-                              ).hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              scaffoldMessenger.hideCurrentSnackBar();
+                              scaffoldMessenger.showSnackBar(
                                 SnackBar(
                                   backgroundColor: Colors.red.shade100,
                                   behavior: SnackBarBehavior.floating,

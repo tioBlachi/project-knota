@@ -3,9 +3,9 @@ Router for HTTP requests related to appointment CRUD operations.
 """
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
-from fastapi.encoders import jsonable_encoder
 from sqlmodel import Session, select, extract
 
 from app.db import get_session
@@ -17,18 +17,17 @@ from app.models.appointment import (
     AppointmentUpdate,
 )
 from app.services.distance_service import get_or_create_distance
-from app.services.pdf_service import generate_pdf_report
 from app.core.security import get_current_user
 
 
 appointment_router = APIRouter(prefix='/appointments', tags=["appointments"], )
 
 
-@appointment_router.post("/", response_model=AppointmentPublic)
+@appointment_router.post("", response_model=AppointmentPublic, status_code=status.HTTP_201_CREATED)
 def create_appointment(
     appointment_data: AppointmentCreate,
     current_user: Annotated[User, Depends(get_current_user)],
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ):
     """
     Creates an appointment by taking in an AppointmentCreate object 
@@ -51,46 +50,33 @@ def create_appointment(
     session.commit()
     session.refresh(new_appointment)
 
-    return jsonable_encoder(new_appointment)
+    return new_appointment
 
 
-@appointment_router.get('/', response_model=list[AppointmentPublic])
+@appointment_router.get("", response_model=list[AppointmentPublic])
 def get_appointment_list(
-    current_user: Annotated[User, Depends(get_current_user)],
-    session: Session = Depends(get_session),
-):
-    appointments = session.exec(
-        select(Appointment)
-        .where(Appointment.user_id == current_user.id)
-        .order_by(Appointment.appointment_date)
-    ).all()
-
-    return appointments
-
-@appointment_router.get("/generate/reports/")
-def get_user_appointments_report(
     current_user: Annotated[User, Depends(get_current_user)],
     year: int | None = None,
     session: Session = Depends(get_session),
-) -> Response:
-    report_year = year or datetime.now().year
-
-    appointments = session.exec(
+):
+    statement = (
         select(Appointment)
         .where(Appointment.user_id == current_user.id)
-        .where(extract('year', Appointment.appointment_date) == report_year)
-        .order_by(Appointment.appointment_date, Appointment.id)
-    ).all()
+        .order_by(Appointment.appointment_date)
+    )
 
-    if not appointments:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No appointments found for {report_year}')
-    
-    return generate_pdf_report(appointments, current_user, report_year)
+    if year is not None:
+        statement = statement.where(
+            extract('year', Appointment.appointment_date) == year
+        )
 
+    appointments = session.exec(statement).all()
+
+    return appointments
 
 @appointment_router.get("/{appointment_id}", response_model=AppointmentPublic)
 def get_appointment(
-    appointment_id: int,
+    appointment_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
 ):    
@@ -114,10 +100,10 @@ def get_appointment(
 
 @appointment_router.patch("/{appointment_id}", response_model=AppointmentPublic)
 def update_appointment(
-    appointment_id: int,
+    appointment_id: UUID,
     appointment_data: AppointmentUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
-    session: Session = Depends(get_session),
+    session: Annotated[Session, Depends(get_session)],
 ):   
     appointment = session.get(Appointment, appointment_id)
 
@@ -135,7 +121,7 @@ def update_appointment(
 
     appointment_data_dump = appointment_data.model_dump(exclude_unset=True)
 
-    if 'destination-address' in appointment_data_dump:
+    if 'destination_address' in appointment_data_dump:
         distance = get_or_create_distance(
             session=session,
             origin_address=current_user.address,
@@ -154,12 +140,12 @@ def update_appointment(
     return appointment
 
 
-@appointment_router.delete("/{appointment_id}")
+@appointment_router.delete("/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_appointment(
-    appointment_id: int,
+    appointment_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     session: Session = Depends(get_session),
-):
+) -> Response:
     appointment = session.get(Appointment, appointment_id)
 
     if not appointment:
@@ -171,4 +157,4 @@ def delete_appointment(
     session.delete(appointment)
     session.commit()
 
-    return {"message": "Appointment deleted", "appointment_id": appointment_id}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

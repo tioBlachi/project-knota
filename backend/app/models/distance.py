@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
 
 class DistanceBase(SQLModel):
-    origin_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
-    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True)]
+    origin_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True, max_length=100)]
+    destination_address: Annotated[str, StringConstraints(to_lower=True, strip_whitespace=True, max_length=100)]
     roundtrip_distance: float
 
 
